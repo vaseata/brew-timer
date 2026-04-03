@@ -346,7 +346,7 @@ function loadFromURL(data){
   // Map dripper names
   const dripperMap={'V60 01':'V60 NEO 01','V60 02':'V60 02','V60 NEO':'V60 NEO 02','V60 NEO 01':'V60 NEO 01','V60 NEO 02':'V60 NEO 02','V60 MUGEN':'V60 MUGEN','Kalita 155':'Kalita 155','Kalita Wave 155':'Kalita 155','Hario V60 01':'V60 NEO 01','Hario V60 02':'V60 02','Hario V60 NEO':'V60 NEO 02','Hario V60 NEO 01':'V60 NEO 01','Hario V60 NEO 02':'V60 NEO 02','Hario スイッチ':'スイッチ','スイッチ':'スイッチ','ネルドリップ':'ネルドリップ','Hario ネルドリップ':'ネルドリップ'};
   document.getElementById('dripper').value=dripperMap[r.dripper]||r.dripper;
-  if(r.filter){document.getElementById('filter').value=r.filter;}else{autoSelectFilter();}
+  if(r.filter){const fSel=document.getElementById('filter');const opts=[...fSel.options].map(o=>o.value);if(!opts.includes(r.filter)){const o=document.createElement('option');o.value=r.filter;o.textContent=r.filter;fSel.appendChild(o);}fSel.value=r.filter;}else{autoSelectFilter();}
   steps=data.steps.length?data.steps:presets[0].steps;
   renderTimeline();updateRatio();
   document.getElementById('bannerBean').textContent=`${r.bean} — ${r.weight}g / ${r.water}ml / C2 ${r.grind}cl / ${r.temp}℃`;
