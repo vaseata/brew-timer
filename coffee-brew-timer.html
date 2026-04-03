@@ -61,7 +61,12 @@
   .step-num{color:var(--accent);font-weight:700;font-size:0.78rem}
   .step-time{color:var(--muted);font-size:0.75rem;font-variant-numeric:tabular-nums}
   .step-op{font-size:0.85rem;line-height:1.4}
-  .step-water{display:flex;gap:14px;margin-top:4px;font-size:0.75rem;color:var(--muted)}
+  .step-water{display:flex;gap:14px;margin-top:4px;font-size:0.75rem;color:var(--muted);flex-wrap:wrap;align-items:center}
+  .flow-rate{background:var(--accent);color:#fff;font-size:0.68rem;font-weight:700;padding:1px 7px;border-radius:10px;letter-spacing:.02em}
+  .step-height{font-size:0.68rem;font-weight:700;padding:1px 7px;border-radius:10px;border:1.5px solid var(--muted);color:var(--fg)}
+  .step-height[data-h="低"]{border-color:#4caf50;color:#4caf50}
+  .step-height[data-h="中"]{border-color:var(--accent);color:var(--accent)}
+  .step-height[data-h="高"]{border-color:#ff5722;color:#ff5722}
   .step-status{font-size:0.7rem;margin-top:3px}
   .step-status.done-text{color:var(--success)}.step-status.active-text{color:var(--active);font-weight:600}
   .step-progress-row{display:flex;align-items:center;gap:10px;margin-top:6px}
@@ -193,7 +198,7 @@
       </div>
       <div class="section">
         <div class="section-title">抽出タイムライン</div>
-        <table class="timeline-table"><thead><tr><th>#</th><th>秒</th><th>ml</th><th>累計</th><th>オペレーション</th><th></th></tr></thead>
+        <table class="timeline-table"><thead><tr><th>#</th><th>秒</th><th>ml</th><th>累計</th><th>ml/s</th><th>高さ</th><th>オペレーション</th><th></th></tr></thead>
           <tbody id="timelineBody"></tbody></table>
         <div class="btn-row"><button class="btn btn-muted btn-sm" onclick="addStep()">+ ステップ</button></div>
       </div>
@@ -289,10 +294,10 @@
 const TIMER_BASE_URL = location.href.split('?')[0];
 
 const presets=[
-  {name:"カルディ ブレンド",bean:"カルディ マイルドブレンド",roast:"medium",weight:15,water:225,grind:16,temp:90,dripper:"V60 02",steps:[{time:0,duration:30,pour:40,op:"蒸らし: 中心から小さな円で注ぐ"},{time:30,duration:20,pour:60,op:"1投目: 中心→外側へ螺旋"},{time:50,duration:20,pour:60,op:"2投目: 螺旋状に注ぐ"},{time:70,duration:20,pour:65,op:"3投目: 中心に優しく"},{time:90,duration:60,pour:0,op:"ドリップダウン"}]},
-  {name:"浅煎りシングル",bean:"エチオピア ナチュラル",roast:"light",weight:14,water:238,grind:14,temp:94,dripper:"V60 NEO 01",steps:[{time:0,duration:40,pour:42,op:"蒸らし: 豆の3倍量"},{time:40,duration:15,pour:56,op:"1投目: 勢いよく中心→外側"},{time:55,duration:15,pour:56,op:"2投目: 螺旋"},{time:70,duration:15,pour:56,op:"3投目: 中心寄り"},{time:85,duration:10,pour:28,op:"仕上げ"},{time:95,duration:55,pour:0,op:"ドリップダウン"}]},
-  {name:"深煎り Kalita",bean:"マンデリン 深煎り",roast:"dark",weight:15,water:200,grind:20,temp:85,dripper:"Kalita 155",steps:[{time:0,duration:30,pour:35,op:"蒸らし"},{time:30,duration:25,pour:55,op:"1投目: ゆっくり"},{time:55,duration:25,pour:55,op:"2投目: 小さな円"},{time:80,duration:25,pour:55,op:"3投目: ゆっくり"},{time:105,duration:75,pour:0,op:"ドリップダウン"}]},
-  {name:"4:6メソッド",bean:"お好みの豆",roast:"medium",weight:15,water:225,grind:18,temp:90,dripper:"V60 02",steps:[{time:0,duration:45,pour:45,op:"1投目(味決め前半)"},{time:45,duration:45,pour:45,op:"2投目(味決め後半)"},{time:90,duration:30,pour:45,op:"3投目(濃度調整)"},{time:120,duration:30,pour:45,op:"4投目"},{time:150,duration:30,pour:45,op:"5投目"},{time:180,duration:30,pour:0,op:"ドリップダウン"}]}
+  {name:"カルディ ブレンド",bean:"カルディ マイルドブレンド",roast:"medium",weight:15,water:225,grind:16,temp:90,dripper:"V60 02",steps:[{time:0,duration:30,pour:40,op:"蒸らし: 中心から小さな円で注ぐ",h:"低"},{time:30,duration:20,pour:60,op:"1投目: 中心→外側へ螺旋",h:"中"},{time:50,duration:20,pour:60,op:"2投目: 螺旋状に注ぐ",h:"中"},{time:70,duration:20,pour:65,op:"3投目: 中心に優しく",h:"低"},{time:90,duration:60,pour:0,op:"ドリップダウン",h:""}]},
+  {name:"浅煎りシングル",bean:"エチオピア ナチュラル",roast:"light",weight:14,water:238,grind:14,temp:94,dripper:"V60 NEO 01",steps:[{time:0,duration:40,pour:42,op:"蒸らし: 豆の3倍量",h:"低"},{time:40,duration:15,pour:56,op:"1投目: 勢いよく中心→外側",h:"高"},{time:55,duration:15,pour:56,op:"2投目: 螺旋",h:"中"},{time:70,duration:15,pour:56,op:"3投目: 中心寄り",h:"低"},{time:85,duration:10,pour:28,op:"仕上げ",h:"低"},{time:95,duration:55,pour:0,op:"ドリップダウン",h:""}]},
+  {name:"深煎り Kalita",bean:"マンデリン 深煎り",roast:"dark",weight:15,water:200,grind:20,temp:85,dripper:"Kalita 155",steps:[{time:0,duration:30,pour:35,op:"蒸らし",h:"低"},{time:30,duration:25,pour:55,op:"1投目: ゆっくり",h:"低"},{time:55,duration:25,pour:55,op:"2投目: 小さな円",h:"低"},{time:80,duration:25,pour:55,op:"3投目: ゆっくり",h:"低"},{time:105,duration:75,pour:0,op:"ドリップダウン",h:""}]},
+  {name:"4:6メソッド",bean:"お好みの豆",roast:"medium",weight:15,water:225,grind:18,temp:90,dripper:"V60 02",steps:[{time:0,duration:45,pour:45,op:"1投目(味決め前半)",h:"中"},{time:45,duration:45,pour:45,op:"2投目(味決め後半)",h:"中"},{time:90,duration:30,pour:45,op:"3投目(濃度調整)",h:"中"},{time:120,duration:30,pour:45,op:"4投目",h:"中"},{time:150,duration:30,pour:45,op:"5投目",h:"中"},{time:180,duration:30,pour:0,op:"ドリップダウン",h:""}]}
 ];
 const sensoryItems=['酸味','甘さ','苦味','ボディ','後味','クリーンさ'];
 const flavorOptions=['チョコレート','ナッツ','キャラメル','黒糖','柑橘','ベリー','花','トロピカル','スパイス','ハーブ','バニラ','ワイン','はちみつ','穀物','煙'];
@@ -316,7 +321,7 @@ function parseURLRecipe(){
     stepsStr.split('|').forEach(s=>{
       const parts=s.split(',');
       if(parts.length>=4){
-        parsedSteps.push({time:parseInt(parts[0])||0,duration:parseInt(parts[1])||30,pour:parseInt(parts[2])||0,op:decodeURIComponent(parts[3]||'')});
+        parsedSteps.push({time:parseInt(parts[0])||0,duration:parseInt(parts[1])||30,pour:parseInt(parts[2])||0,op:decodeURIComponent(parts[3]||''),h:parts[4]?decodeURIComponent(parts[4]):''});
       }
     });
   }
@@ -330,7 +335,7 @@ function generateRecipeURL(recipe,stepsArr){
   p.set('grind',recipe.grind);p.set('temp',recipe.temp);
   p.set('dripper',recipe.dripper);
   if(recipe.filter)p.set('filter',recipe.filter);
-  const stepsStr=stepsArr.map(s=>`${s.time},${s.duration},${s.pour},${encodeURIComponent(s.op)}`).join('|');
+  const stepsStr=stepsArr.map(s=>`${s.time},${s.duration},${s.pour},${encodeURIComponent(s.op)},${encodeURIComponent(s.h||'')}`).join('|');
   p.set('steps',stepsStr);
   return TIMER_BASE_URL+'?'+p.toString();
 }
@@ -400,11 +405,11 @@ function loadPreset(idx){
 function renderTimeline(){
   const tbody=document.getElementById('timelineBody');tbody.innerHTML='';let cum=0;
   steps.forEach((s,i)=>{cum+=s.pour;const tr=document.createElement('tr');
-    tr.innerHTML=`<td style="color:var(--accent);font-weight:600">${i+1}</td><td><input type="number" value="${s.time}" onchange="updateStep(${i},'time',this.value)" style="width:44px"></td><td><input type="number" value="${s.pour}" onchange="updateStep(${i},'pour',this.value)" style="width:44px"></td><td style="color:var(--muted)">${cum}</td><td><input type="text" value="${s.op}" onchange="updateStep(${i},'op',this.value)"></td><td><button class="btn-del" onclick="removeStep(${i})">×</button></td>`;
+    const rate=s.pour>0&&s.duration>0?(s.pour/s.duration).toFixed(1):'—';const hVal=s.h||'';tr.innerHTML=`<td style="color:var(--accent);font-weight:600">${i+1}</td><td><input type="number" value="${s.time}" onchange="updateStep(${i},'time',this.value)" style="width:44px"></td><td><input type="number" value="${s.pour}" onchange="updateStep(${i},'pour',this.value)" style="width:44px"></td><td style="color:var(--muted)">${cum}</td><td style="color:var(--accent);font-weight:600;font-size:.78rem">${rate}</td><td><select onchange="updateStep(${i},'h',this.value)" style="width:46px;font-size:.75rem"><option value=""${hVal===''?' selected':''}> </option><option value="低"${hVal==='低'?' selected':''}>低</option><option value="中"${hVal==='中'?' selected':''}>中</option><option value="高"${hVal==='高'?' selected':''}>高</option></select></td><td><input type="text" value="${s.op}" onchange="updateStep(${i},'op',this.value)"></td><td><button class="btn-del" onclick="removeStep(${i})">×</button></td>`;
     tbody.appendChild(tr);});
 }
-function updateStep(i,f,v){if(f==='time'||f==='pour')v=parseInt(v)||0;steps[i][f]=v;renderTimeline();}
-function addStep(){const l=steps[steps.length-1];steps.push({time:l?l.time+(l.duration||30):0,duration:30,pour:0,op:"新しいステップ"});renderTimeline();}
+function updateStep(i,f,v){if(f==='time'||f==='pour')v=parseInt(v)||0;steps[i][f]=v;renderTimeline();updateRatio();}
+function addStep(){const l=steps[steps.length-1];steps.push({time:l?l.time+(l.duration||30):0,duration:30,pour:0,op:"新しいステップ",h:"中"});renderTimeline();}
 function removeStep(i){steps.splice(i,1);renderTimeline();}
 function autoSelectFilter(){const d=document.getElementById('dripper').value;const map={'V60 02':'CAFEC アバカ 円錐 2-4杯','V60 NEO 01':'HARIO V60ペーパー 白 1-2杯','V60 NEO 02':'CAFEC アバカ 円錐 2-4杯','V60 MUGEN':'HARIO V60ペーパー 白 1-2杯','Kalita 155':'カリタ ウェーブ 155','スイッチ':'CAFEC アバカ 円錐 2-4杯','ネルドリップ':'ネルフィルター'};document.getElementById('filter').value=map[d]||'CAFEC アバカ 円錐 2-4杯';}
 
@@ -425,7 +430,7 @@ function startBrew(){
   if(navigator.wakeLock)navigator.wakeLock.request('screen').catch(()=>{});
 }
 function renderRecipeSummary(){const r=lastBrewRecipe;document.getElementById('recipeSummary').innerHTML=[{i:'☕',v:r.bean,l:'豆'},{i:'⚖️',v:r.weight+'g',l:'豆量'},{i:'💧',v:r.water+'ml',l:'湯量'},{i:'🔧',v:r.grind+'cl',l:'C2'},{i:'🌡️',v:r.temp+'℃',l:'湯温'},{i:'📎',v:r.dripper,l:'ドリッパー'},{i:'📄',v:r.filter||'-',l:'フィルター'}].map(x=>`<div class="item"><div class="icon">${x.i}</div><div class="val">${x.v}</div><div class="lbl">${x.l}</div></div>`).join('');}
-function renderStepCards(){let c=0;const circ=2*Math.PI*16;const tw=steps.reduce((a,s)=>a+s.pour,0)||1;const tt=totalTime||1;steps.forEach((s,i)=>{s._wStartPct=c/tw*100;c+=s.pour;s._wEndPct=c/tw*100;s._tStartPct=s.time/tt*100;s._tEndPct=(s.time+s.duration)/tt*100;});c=0;document.getElementById('stepCards').innerHTML=steps.map((s,i)=>{c+=s.pour;const pourLabel=s.pour>0?`${c}ml`:'—';const initTimePct=Math.round(s._tStartPct);return`<div class="step-card" id="step-${i}"><div class="step-header"><span class="step-num">STEP ${i+1}</span><span class="step-time">${fmt(s.time)}~${fmt(s.time+s.duration)}</span></div><div class="step-op">${s.op}</div><div class="step-water">${s.pour>0?`<span>${s.pour}ml / ${s.duration}秒</span>`:''}<span>累計${c}ml</span></div><div class="step-progress-row"><div class="step-ring"><svg viewBox="0 0 38 38"><circle class="step-ring-bg" cx="19" cy="19" r="16"/><circle class="step-ring-fg" id="ring-${i}" cx="19" cy="19" r="16" stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${(circ*(1-s._tStartPct/100)).toFixed(1)}"/></svg><div class="step-ring-text" id="ringTxt-${i}">${initTimePct}%</div></div><div class="step-prog-wrap"><div class="step-pour-label" id="pourLbl-${i}">${pourLabel}</div><div class="step-prog-bar-bg"><div class="step-prog-range" style="left:${s._wStartPct.toFixed(1)}%;width:${(s._wEndPct-s._wStartPct).toFixed(1)}%"></div><div class="step-prog-bar" id="bar-${i}"></div></div></div></div><div class="step-status" id="ss-${i}"></div></div>`;}).join('');}
+function renderStepCards(){let c=0;const circ=2*Math.PI*16;const tw=steps.reduce((a,s)=>a+s.pour,0)||1;const tt=totalTime||1;steps.forEach((s,i)=>{s._wStartPct=c/tw*100;c+=s.pour;s._wEndPct=c/tw*100;s._tStartPct=s.time/tt*100;s._tEndPct=(s.time+s.duration)/tt*100;});c=0;document.getElementById('stepCards').innerHTML=steps.map((s,i)=>{c+=s.pour;const pourLabel=s.pour>0?`${c}ml`:'—';const initTimePct=Math.round(s._tStartPct);return`<div class="step-card" id="step-${i}"><div class="step-header"><span class="step-num">STEP ${i+1}</span><span class="step-time">${fmt(s.time)}~${fmt(s.time+s.duration)}</span></div><div class="step-op">${s.op}</div><div class="step-water">${s.pour>0?`<span>${s.pour}ml / ${s.duration}秒</span><span class="flow-rate">${(s.pour/s.duration).toFixed(1)} ml/s</span>`:''}<span>累計${c}ml</span>${s.h?`<span class="step-height" data-h="${s.h}">↕${s.h}</span>`:''}</div><div class="step-progress-row"><div class="step-ring"><svg viewBox="0 0 38 38"><circle class="step-ring-bg" cx="19" cy="19" r="16"/><circle class="step-ring-fg" id="ring-${i}" cx="19" cy="19" r="16" stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${(circ*(1-s._tStartPct/100)).toFixed(1)}"/></svg><div class="step-ring-text" id="ringTxt-${i}">${initTimePct}%</div></div><div class="step-prog-wrap"><div class="step-pour-label" id="pourLbl-${i}">${pourLabel}</div><div class="step-prog-bar-bg"><div class="step-prog-range" style="left:${s._wStartPct.toFixed(1)}%;width:${(s._wEndPct-s._wStartPct).toFixed(1)}%"></div><div class="step-prog-bar" id="bar-${i}"></div></div></div></div><div class="step-status" id="ss-${i}"></div></div>`;}).join('');}
 function tick(){if(isPaused)return;elapsed++;updateTimerDisplay();steps.forEach(s=>{if(elapsed===s.time)doubleBeep();});if(elapsed>=totalTime){clearInterval(timerInterval);beep(660,.3);setTimeout(()=>beep(880,.3),400);setTimeout(()=>beep(1100,.5),800);}}
 function updateTimerDisplay(){document.getElementById('timerDisplay').textContent=fmt(elapsed);document.getElementById('progressBar').style.width=`${Math.min(100,elapsed/totalTime*100)}%`;const circ=2*Math.PI*16;let cs=-1,cw=0,cp=0;steps.forEach((s,i)=>{const cd=document.getElementById(`step-${i}`),st=document.getElementById(`ss-${i}`),bar=document.getElementById(`bar-${i}`),ring=document.getElementById(`ring-${i}`),ringTxt=document.getElementById(`ringTxt-${i}`),et=s.time+s.duration;let tPct=s._tStartPct||0,wPct=s._wStartPct||0;if(elapsed>=et){cd.className='step-card done';st.className='step-status done-text';st.textContent='✓';cw+=s.pour;tPct=s._tEndPct||0;wPct=s._wEndPct||0;}else if(elapsed>=s.time){cd.className='step-card current';st.className='step-status active-text';st.textContent=`▶ 残り${et-elapsed}秒`;cs=i;const prog=(elapsed-s.time)/s.duration;tPct=(s._tStartPct||0)+(((s._tEndPct||0)-(s._tStartPct||0))*prog);wPct=(s._wStartPct||0)+(((s._wEndPct||0)-(s._wStartPct||0))*prog);if(s.pour>0)cp=Math.round(s.pour*prog);else cp=0;let pc=0;for(let j=0;j<i;j++)pc+=steps[j].pour;cw=pc+cp;cd.scrollIntoView({behavior:'smooth',block:'nearest'});}else{cd.className=i===cs+1?'step-card next':'step-card';st.textContent='';tPct=s._tStartPct||0;wPct=s._wStartPct||0;}if(bar)bar.style.width=Math.round(wPct)+'%';if(ring)ring.setAttribute('stroke-dashoffset',(circ*(1-tPct/100)).toFixed(1));if(ringTxt)ringTxt.textContent=Math.round(tPct)+'%';});document.getElementById('currentPour').textContent=cp;document.getElementById('cumWater').textContent=cw;}
 function togglePause(){isPaused=!isPaused;document.getElementById('pauseBtn').textContent=isPaused?'▶ 再開':'⏸ 一時停止';}
