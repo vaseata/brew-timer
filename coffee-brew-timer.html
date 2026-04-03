@@ -198,7 +198,7 @@
       </div>
       <div class="section">
         <div class="section-title">抽出タイムライン</div>
-        <table class="timeline-table"><thead><tr><th>#</th><th>秒</th><th>ml</th><th>累計</th><th>ml/s</th><th>高さ</th><th>オペレーション</th><th></th></tr></thead>
+        <table class="timeline-table"><thead><tr><th>#</th><th>開始</th><th>秒数</th><th>ml</th><th>累計</th><th>ml/s</th><th>高さ</th><th>オペレーション</th><th></th></tr></thead>
           <tbody id="timelineBody"></tbody></table>
         <div class="btn-row"><button class="btn btn-muted btn-sm" onclick="addStep()">+ ステップ</button></div>
       </div>
@@ -233,22 +233,18 @@
       <div class="form-group" style="margin-bottom:10px"><label>気になった点・変更点</label><textarea id="fbNotes" placeholder="2投目でやや速く注ぎすぎた"></textarea></div>
     </div>
     <div class="section">
-      <div class="section-title">📸 粉床</div>
-      <div class="photo-upload-area"><input type="file" accept="image/*" onchange="previewPhoto(this,'bedPreview')"><div class="icon">📸</div><div class="label">粉床の写真を追加</div></div>
-      <div class="photo-preview" id="bedPreview"></div>
-      <div class="form-row" style="margin-top:6px">
-        <div class="form-group"><label>平坦さ</label><select id="fbBedFlat"><option value="">--</option><option>平ら</option><option>やや片寄り</option><option>大きく片寄り</option></select></div>
-        <div class="form-group"><label>壁面付着</label><select id="fbBedWall"><option value="">--</option><option>なし</option><option>少し</option><option>多い</option></select></div>
+      <div class="section-title">📸 写真（Claudeが画像判定します）</div>
+      <div style="display:flex;gap:10px">
+        <div style="flex:1">
+          <div class="photo-upload-area"><input type="file" accept="image/*" onchange="previewPhoto(this,'bedPreview')"><div class="icon">📸</div><div class="label">粉床</div></div>
+          <div class="photo-preview" id="bedPreview"></div>
+        </div>
+        <div style="flex:1">
+          <div class="photo-upload-area"><input type="file" accept="image/*" onchange="previewPhoto(this,'liquidPreview')"><div class="icon">📸</div><div class="label">抽出液</div></div>
+          <div class="photo-preview" id="liquidPreview"></div>
+        </div>
       </div>
-    </div>
-    <div class="section">
-      <div class="section-title">📸 抽出液</div>
-      <div class="photo-upload-area"><input type="file" accept="image/*" onchange="previewPhoto(this,'liquidPreview')"><div class="icon">📸</div><div class="label">抽出液の写真を追加</div></div>
-      <div class="photo-preview" id="liquidPreview"></div>
-      <div class="form-row" style="margin-top:6px">
-        <div class="form-group"><label>色の濃さ</label><select id="fbLiqColor"><option value="">--</option><option>薄い</option><option>普通</option><option>濃い</option></select></div>
-        <div class="form-group"><label>透明度</label><select id="fbLiqClarity"><option value="">--</option><option>クリア</option><option>少し濁り</option><option>濁っている</option></select></div>
-      </div>
+      <div style="color:var(--muted);font-size:0.68rem;margin-top:6px;text-align:center">平坦さ・壁面付着・色の濃さ・透明度はClaudeが写真から判定します</div>
     </div>
     <div class="section">
       <div class="section-title">👅 官能評価</div>
@@ -405,10 +401,10 @@ function loadPreset(idx){
 function renderTimeline(){
   const tbody=document.getElementById('timelineBody');tbody.innerHTML='';let cum=0;
   steps.forEach((s,i)=>{cum+=s.pour;const tr=document.createElement('tr');
-    const rate=s.pour>0&&s.duration>0?(s.pour/s.duration).toFixed(1):'—';const hVal=s.h||'';tr.innerHTML=`<td style="color:var(--accent);font-weight:600">${i+1}</td><td><input type="number" value="${s.time}" onchange="updateStep(${i},'time',this.value)" style="width:44px"></td><td><input type="number" value="${s.pour}" onchange="updateStep(${i},'pour',this.value)" style="width:44px"></td><td style="color:var(--muted)">${cum}</td><td style="color:var(--accent);font-weight:600;font-size:.78rem">${rate}</td><td><select onchange="updateStep(${i},'h',this.value)" style="width:46px;font-size:.75rem"><option value=""${hVal===''?' selected':''}> </option><option value="低"${hVal==='低'?' selected':''}>低</option><option value="中"${hVal==='中'?' selected':''}>中</option><option value="高"${hVal==='高'?' selected':''}>高</option></select></td><td><input type="text" value="${s.op}" onchange="updateStep(${i},'op',this.value)"></td><td><button class="btn-del" onclick="removeStep(${i})">×</button></td>`;
+    const rate=s.pour>0&&s.duration>0?(s.pour/s.duration).toFixed(1):'—';const hVal=s.h||'';tr.innerHTML=`<td style="color:var(--accent);font-weight:600">${i+1}</td><td><input type="number" value="${s.time}" onchange="updateStep(${i},'time',this.value)" style="width:44px"></td><td><input type="number" value="${s.duration}" onchange="updateStep(${i},'duration',this.value)" style="width:44px"></td><td><input type="number" value="${s.pour}" onchange="updateStep(${i},'pour',this.value)" style="width:44px"></td><td style="color:var(--muted)">${cum}</td><td style="color:var(--accent);font-weight:600;font-size:.78rem">${rate}</td><td><select onchange="updateStep(${i},'h',this.value)" style="width:46px;font-size:.75rem"><option value=""${hVal===''?' selected':''}> </option><option value="低"${hVal==='低'?' selected':''}>低</option><option value="中"${hVal==='中'?' selected':''}>中</option><option value="高"${hVal==='高'?' selected':''}>高</option></select></td><td><input type="text" value="${s.op}" onchange="updateStep(${i},'op',this.value)"></td><td><button class="btn-del" onclick="removeStep(${i})">×</button></td>`;
     tbody.appendChild(tr);});
 }
-function updateStep(i,f,v){if(f==='time'||f==='pour')v=parseInt(v)||0;steps[i][f]=v;renderTimeline();updateRatio();}
+function updateStep(i,f,v){if(f==='time'||f==='pour'||f==='duration')v=parseInt(v)||0;steps[i][f]=v;renderTimeline();updateRatio();}
 function addStep(){const l=steps[steps.length-1];steps.push({time:l?l.time+(l.duration||30):0,duration:30,pour:0,op:"新しいステップ",h:"中"});renderTimeline();}
 function removeStep(i){steps.splice(i,1);renderTimeline();}
 function autoSelectFilter(){const d=document.getElementById('dripper').value;const map={'V60 02':'CAFEC アバカ 円錐 2-4杯','V60 NEO 01':'HARIO V60ペーパー 白 1-2杯','V60 NEO 02':'CAFEC アバカ 円錐 2-4杯','V60 MUGEN':'HARIO V60ペーパー 白 1-2杯','Kalita 155':'カリタ ウェーブ 155','スイッチ':'CAFEC アバカ 円錐 2-4杯','ネルドリップ':'ネルフィルター'};document.getElementById('filter').value=map[d]||'CAFEC アバカ 円錐 2-4杯';}
@@ -420,7 +416,7 @@ function doubleBeep(){beep(880,.12);setTimeout(()=>beep(1100,.15),180);}
 
 // Timer
 function startBrew(){
-  for(let i=0;i<steps.length;i++)steps[i].duration=(i<steps.length-1)?steps[i+1].time-steps[i].time:(steps[i].duration||60);
+  for(let i=0;i<steps.length;i++){if(!steps[i].duration||steps[i].duration<=0){steps[i].duration=(i<steps.length-1)?steps[i+1].time-steps[i].time:60;}}
   totalTime=steps.reduce((s,st)=>Math.max(s,st.time+st.duration),0);
   lastBrewRecipe={bean:document.getElementById('beanName').value,roast:document.getElementById('roastLevel').value,weight:document.getElementById('beanWeight').value,water:document.getElementById('totalWater').value,ratio:document.getElementById('ratio').value,grind:document.getElementById('grindClicks').value,temp:document.getElementById('waterTemp').value,dripper:document.getElementById('dripper').value,filter:document.getElementById('filter').value,target_time:fmt(totalTime)};
   document.getElementById('editorView').classList.add('hidden');document.getElementById('loadedBanner').style.display='none';
@@ -445,8 +441,8 @@ const fbPhotos={bed:null,liquid:null};
 function previewPhoto(input,id){const p=document.getElementById(id);if(input.files&&input.files[0]){const key=id.includes('bed')?'bed':'liquid';fbPhotos[key]=input.files[0];const r=new FileReader();r.onload=e=>{p.innerHTML=`<img src="${e.target.result}">`;};r.readAsDataURL(input.files[0]);}}
 
 // Feedback
-function gatherFeedback(){const se={};sensoryItems.forEach((item,i)=>{const sel=document.querySelectorAll(`[data-s="${i}"].selected`);se[item]={score:sel.length,comment:document.querySelector(`[data-sc="${i}"]`)?.value||''};});const fl=[...document.querySelectorAll('.flavor-tag.selected')].map(t=>t.textContent);const o=document.getElementById('fbFlavorOther').value;if(o)fl.push(o);return{date:new Date().toISOString().split('T')[0],time:new Date().toTimeString().slice(0,5),recipe:lastBrewRecipe||{bean:document.getElementById('beanName').value},actual:{time:document.getElementById('fbActualTime').value,temp:document.getElementById('fbActualTemp').value,notes:document.getElementById('fbNotes').value},bed:{flatness:document.getElementById('fbBedFlat').value,wall:document.getElementById('fbBedWall').value},liquid:{color:document.getElementById('fbLiqColor').value,clarity:document.getElementById('fbLiqClarity').value},sensory:se,overall:parseInt(document.getElementById('fbOverall').value),flavors:fl,next_request:document.getElementById('fbNextRequest').value,challenge:document.getElementById('fbChallenge').value==='yes'};}
-function buildFeedbackText(){const fb=gatherFeedback();let t=`☕ 抽出フィードバック\n日時: ${fb.date} ${fb.time}\n`;if(fb.recipe)t+=`豆: ${fb.recipe.bean||''} / ${fb.recipe.weight||''}g / ${fb.recipe.water||''}ml / C2 ${fb.recipe.grind||''}cl / ${fb.recipe.temp||''}℃ / ${fb.recipe.dripper||''} / ${fb.recipe.filter||''}\n`;t+=`\n【操作】抽出時間:${fb.actual.time} 湯温:${fb.actual.temp}\n${fb.actual.notes}\n【粉床】${fb.bed.flatness} / 壁面:${fb.bed.wall}\n【液】色:${fb.liquid.color} 透明度:${fb.liquid.clarity}\n\n【官能評価】\n`;sensoryItems.forEach(i=>{if(fb.sensory[i])t+=`${i}:${fb.sensory[i].score}/5 ${fb.sensory[i].comment?'('+fb.sensory[i].comment+')':''}\n`;});t+=`総合:${fb.overall}/10\n【フレーバー】${fb.flavors.join(',')}\n【次回】${fb.next_request}`;if(fb.challenge)t+='\n→チャレンジしたい！';return t;}
+function gatherFeedback(){const se={};sensoryItems.forEach((item,i)=>{const sel=document.querySelectorAll(`[data-s="${i}"].selected`);se[item]={score:sel.length,comment:document.querySelector(`[data-sc="${i}"]`)?.value||''};});const fl=[...document.querySelectorAll('.flavor-tag.selected')].map(t=>t.textContent);const o=document.getElementById('fbFlavorOther').value;if(o)fl.push(o);return{date:new Date().toISOString().split('T')[0],time:new Date().toTimeString().slice(0,5),recipe:lastBrewRecipe||{bean:document.getElementById('beanName').value},actual:{time:document.getElementById('fbActualTime').value,temp:document.getElementById('fbActualTemp').value,notes:document.getElementById('fbNotes').value},photos:{bed:!!fbPhotos.bed,liquid:!!fbPhotos.liquid},sensory:se,overall:parseInt(document.getElementById('fbOverall').value),flavors:fl,next_request:document.getElementById('fbNextRequest').value,challenge:document.getElementById('fbChallenge').value==='yes'};}
+function buildFeedbackText(){const fb=gatherFeedback();let t=`☕ 抽出フィードバック\n日時: ${fb.date} ${fb.time}\n`;if(fb.recipe)t+=`豆: ${fb.recipe.bean||''} / ${fb.recipe.weight||''}g / ${fb.recipe.water||''}ml / C2 ${fb.recipe.grind||''}cl / ${fb.recipe.temp||''}℃ / ${fb.recipe.dripper||''} / ${fb.recipe.filter||''}\n`;t+=`\n【操作】抽出時間:${fb.actual.time} 湯温:${fb.actual.temp}\n${fb.actual.notes}\n【写真】粉床:${fb.photos.bed?'添付あり':'なし'} / 抽出液:${fb.photos.liquid?'添付あり':'なし'}（Claudeが画像判定）\n\n【官能評価】\n`;sensoryItems.forEach(i=>{if(fb.sensory[i])t+=`${i}:${fb.sensory[i].score}/5 ${fb.sensory[i].comment?'('+fb.sensory[i].comment+')':''}\n`;});t+=`総合:${fb.overall}/10\n【フレーバー】${fb.flavors.join(',')}\n【次回】${fb.next_request}`;if(fb.challenge)t+='\n→チャレンジしたい！';return t;}
 async function exportFeedback(){const t=buildFeedbackText();const photos=[];if(fbPhotos.bed)photos.push(new File([fbPhotos.bed],'粉床.jpg',{type:fbPhotos.bed.type}));if(fbPhotos.liquid)photos.push(new File([fbPhotos.liquid],'抽出液.jpg',{type:fbPhotos.liquid.type}));if(photos.length>0&&navigator.canShare&&navigator.canShare({files:photos})){try{await navigator.share({text:t,files:photos});return;}catch(e){if(e.name==='AbortError')return;}}navigator.clipboard.writeText(t).then(()=>alert(photos.length>0?'テキストをコピーしました！写真は別途Claudeに添付してください':'コピーしました！Claudeに貼り付けてください'));}
 function saveFeedbackLocal(){const fb=gatherFeedback();let logs=[];try{logs=JSON.parse(localStorage.getItem('brewLogs')||'[]');}catch(e){}fb.id=logs.length+1;logs.push(fb);try{localStorage.setItem('brewLogs',JSON.stringify(logs));}catch(e){}alert('保存しました！');loadLogs();}
 
