@@ -152,10 +152,34 @@
   .install-prompt b{color:var(--accent)}
   @media(max-width:480px){.timer-time{font-size:3rem}.form-row{flex-direction:column}.form-group{min-width:100%}.rating-group{flex-wrap:wrap}}
   @media(display-mode:standalone){.install-prompt{display:none!important}}
+  /* QR Code Modal */
+  .qr-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+  .qr-overlay.show{opacity:1;pointer-events:auto}
+  .qr-modal{background:var(--card);border-radius:16px;padding:24px;max-width:340px;width:90%;text-align:center;transform:scale(.9);transition:transform .25s}
+  .qr-overlay.show .qr-modal{transform:scale(1)}
+  .qr-modal-title{color:var(--accent);font-size:0.9rem;font-weight:700;margin-bottom:4px}
+  .qr-modal-sub{color:var(--muted);font-size:0.7rem;margin-bottom:16px}
+  .qr-canvas-wrap{background:#fff;border-radius:12px;padding:16px;display:inline-block;margin-bottom:16px}
+  .qr-canvas-wrap canvas{display:block}
+  .qr-bean-label{color:var(--text);font-size:0.85rem;margin-bottom:12px}
+  .qr-close{background:var(--accent2);color:var(--text);border:none;border-radius:8px;padding:8px 24px;cursor:pointer;font-size:0.82rem;transition:background .2s}
+  .qr-close:hover{background:var(--muted)}
+  .btn-qr{background:transparent;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:0.78rem;transition:all .2s;display:inline-flex;align-items:center;gap:4px}
+  .btn-qr:hover{background:var(--accent);color:var(--bg)}
 </style>
 </head>
 <body>
 <div class="beep-indicator" id="beepFlash"></div>
+<div class="qr-overlay" id="qrOverlay" onclick="if(event.target===this)closeQR()">
+  <div class="qr-modal">
+    <div class="qr-modal-title">📱 スマホでスキャン</div>
+    <div class="qr-modal-sub">このレシピをスマホのBrew Timerで開けます</div>
+    <div class="qr-bean-label" id="qrBeanLabel"></div>
+    <div class="qr-canvas-wrap"><canvas id="qrCanvas"></canvas></div>
+    <br>
+    <button class="qr-close" onclick="closeQR()">閉じる</button>
+  </div>
+</div>
 <div class="container">
   <h1>☕ BREW TIMER</h1>
   <p class="subtitle">Pour-over Coffee Extraction Guide</p>
@@ -177,7 +201,10 @@
     <div id="loadedBanner" class="recipe-loaded-banner" style="display:none">
       <div class="title">Claudeのレシピを読み込みました</div>
       <div class="bean-name" id="bannerBean"></div>
-      <button class="btn btn-accent" onclick="startBrew()">▶ このレシピで抽出スタート</button>
+      <div style="display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-accent" onclick="startBrew()">▶ このレシピで抽出スタート</button>
+        <button class="btn-qr" onclick="showQR()">📱 QR</button>
+      </div>
     </div>
     <div class="editor-view" id="editorView">
       <div class="section">
@@ -213,8 +240,9 @@
           <tbody id="timelineBody"></tbody></table>
         <div class="btn-row"><button class="btn btn-muted btn-sm" onclick="addStep()">+ ステップ</button></div>
       </div>
-      <div style="text-align:center;margin:16px 0">
+      <div style="text-align:center;margin:16px 0;display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap">
         <button class="btn btn-accent" onclick="startBrew()" style="font-size:1.05rem;padding:12px 36px">▶ 抽出スタート</button>
+        <button class="btn-qr" onclick="showQR()">📱 QR</button>
       </div>
     </div>
     <div class="timer-view" id="timerView">
@@ -494,6 +522,44 @@ function exportAllLogs(){let l=[];try{l=JSON.parse(localStorage.getItem('brewLog
 function clearLogs(){if(confirm('全記録を削除？')){try{localStorage.removeItem('brewLogs');}catch(e){}loadLogs();}}
 
 init();
+
+// ===== QR CODE =====
+// Minimal QR Code generator (inline, no external dependency)
+// Uses canvas to render QR from current recipe URL
+let qrLib=null;
+function loadQRLib(){
+  return new Promise((resolve,reject)=>{
+    if(qrLib){resolve();return;}
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js';
+    s.onload=()=>{qrLib=true;resolve();};
+    s.onerror=()=>reject(new Error('QR library load failed'));
+    document.head.appendChild(s);
+  });
+}
+function getCurrentRecipeURL(){
+  const recipe={
+    bean:document.getElementById('beanName').value,
+    roast:document.getElementById('roastLevel').value,
+    weight:parseInt(document.getElementById('beanWeight').value)||15,
+    water:parseInt(document.getElementById('totalWater').value)||225,
+    grind:parseInt(document.getElementById('grindClicks').value)||16,
+    temp:parseInt(document.getElementById('waterTemp').value)||90,
+    dripper:document.getElementById('dripper').value,
+    filter:document.getElementById('filter').value
+  };
+  return generateRecipeURL(recipe,steps);
+}
+async function showQR(){
+  try{await loadQRLib();}catch(e){alert('QRライブラリの読み込みに失敗しました');return;}
+  const url=getCurrentRecipeURL();
+  const bean=document.getElementById('beanName').value;
+  document.getElementById('qrBeanLabel').textContent=bean;
+  const canvas=document.getElementById('qrCanvas');
+  new QRious({element:canvas,value:url,size:220,level:'M',background:'#ffffff',foreground:'#1a1410'});
+  document.getElementById('qrOverlay').classList.add('show');
+}
+function closeQR(){document.getElementById('qrOverlay').classList.remove('show');}
 
 // Service Worker registration
 if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
