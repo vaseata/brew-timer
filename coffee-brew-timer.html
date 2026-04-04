@@ -499,21 +499,38 @@ function setPref(i,v){document.querySelectorAll(`[data-pref="${i}"]`).forEach(b=
 function renderFlavorTags(){let h='';Object.entries(flavorCategories).forEach(([cat,items])=>{h+=`<div class="flavor-cat">${cat}</div>`;h+=items.map(f=>`<button class="flavor-tag" onclick="this.classList.toggle('selected')">${f}</button>`).join('');});document.getElementById('flavorTags').innerHTML=h;document.getElementById('textureTags').innerHTML=textureOptions.map(t=>`<button class="flavor-tag" onclick="this.classList.toggle('selected')">${t}</button>`).join('');}
 const fbPhotos={bed:null,liquid:null};const fbPhotoTimings={bed:'',liquid:''};
 function calcPhotoTiming(file){
-  if(!brewStartTime)return'タイミング不明（タイマー未使用）';
-  const photoTime=file.lastModified||Date.now();
-  const diffSec=Math.round((photoTime-brewStartTime)/1000);
+  if(!brewStartTime)return'';
+  const now=Date.now();
+  const fileTime=file.lastModified||now;
+  // lastModifiedが現実的か判定（抽出開始の60秒前〜現在+10秒の範囲内）
+  const useTime=(fileTime>=brewStartTime-60000&&fileTime<=now+10000)?fileTime:now;
+  const diffSec=Math.round((useTime-brewStartTime)/1000);
   if(diffSec<0)return`抽出${Math.abs(diffSec)}秒前`;
   if(diffSec<=totalTime)return`注湯中 @${fmt(diffSec)}`;
   const afterSec=diffSec-totalTime;
   if(afterSec<60)return`抽出直後（+${afterSec}秒）`;
-  return`抽出${Math.round(afterSec/60)}分後`;
+  const mins=Math.round(afterSec/60);
+  return`抽出${mins}分後`;
 }
 function previewPhoto(input,id){const p=document.getElementById(id);if(input.files&&input.files[0]){const key=id.includes('bed')?'bed':'liquid';fbPhotos[key]=input.files[0];const r=new FileReader();r.onload=e=>{p.innerHTML=`<img src="${e.target.result}">`;};r.readAsDataURL(input.files[0]);const timing=calcPhotoTiming(input.files[0]);fbPhotoTimings[key]=timing;const autoEl=document.getElementById(key==='bed'?'bedTimingAuto':'liqTimingAuto');autoEl.textContent='⏱ '+timing;autoEl.style.display='block';}}
 
 // Feedback
 function gatherFeedback(){const se={};sensoryItems.forEach((item,i)=>{const intensity=parseInt(document.getElementById(`cva-${i}`).value);const prefBtn=document.querySelector(`[data-pref="${i}"].sel-good,[data-pref="${i}"].sel-ok,[data-pref="${i}"].sel-bad`);const pref=prefBtn?prefBtn.dataset.pv:'';const comment=document.getElementById(`cvaC-${i}`)?.value||'';se[item.key]={label:item.label,intensity,pref,comment};});const fl=[...document.getElementById('flavorTags').querySelectorAll('.flavor-tag.selected')].map(t=>t.textContent);const o=document.getElementById('fbFlavorOther').value;if(o)fl.push(o);const tx=[...document.getElementById('textureTags').querySelectorAll('.flavor-tag.selected')].map(t=>t.textContent);return{date:new Date().toISOString().split('T')[0],time:new Date().toTimeString().slice(0,5),recipe:lastBrewRecipe||{bean:document.getElementById('beanName').value},actual:{time:document.getElementById('fbActualTime').value,temp:document.getElementById('fbActualTemp').value,notes:document.getElementById('fbNotes').value},photos:{bed:!!fbPhotos.bed,bedTiming:fbPhotoTimings.bed||'',liquid:!!fbPhotos.liquid,liqTiming:fbPhotoTimings.liquid||''},sensory:se,overall:parseInt(document.getElementById('fbOverall').value),flavors:fl,textures:tx,next_request:document.getElementById('fbNextRequest').value,challenge:document.getElementById('fbChallenge').value==='yes'};}
 function buildFeedbackText(){const fb=gatherFeedback();const prefMap={good:'😊',ok:'😐',bad:'😞','':''};let t=`☕ 抽出フィードバック\n日時: ${fb.date} ${fb.time}\n`;if(fb.recipe)t+=`豆: ${fb.recipe.bean||''} / ${fb.recipe.weight||''}g / ${fb.recipe.water||''}ml / C2 ${fb.recipe.grind||''}cl / ${fb.recipe.temp||''}℃ / ${fb.recipe.dripper||''} / ${fb.recipe.filter||''}\n`;t+=`\n【操作】抽出時間:${fb.actual.time} 湯温:${fb.actual.temp}\n${fb.actual.notes}\n【写真】粉床:${fb.photos.bed?'添付あり('+fb.photos.bedTiming+')':'なし'} / 抽出液:${fb.photos.liquid?'添付あり('+fb.photos.liqTiming+')':'なし'}（Claudeが画像判定）\n\n【官能評価（CVA）】強さ/10 + 好み\n`;sensoryItems.forEach(item=>{const s=fb.sensory[item.key];if(s)t+=`${s.label}: ${s.intensity}/10 ${prefMap[s.pref]||''} ${s.comment?'('+s.comment+')':''}\n`;});t+=`総合:${fb.overall}/10\n【フレーバー】${fb.flavors.join(',')}\n【テクスチャー】${fb.textures.join(',')}\n【次回】${fb.next_request}`;if(fb.challenge)t+='\n→チャレンジしたい！';return t;}
-async function exportFeedback(){const t=buildFeedbackText();const photos=[];if(fbPhotos.bed)photos.push(new File([fbPhotos.bed],'粉床.jpg',{type:fbPhotos.bed.type}));if(fbPhotos.liquid)photos.push(new File([fbPhotos.liquid],'抽出液.jpg',{type:fbPhotos.liquid.type}));if(photos.length>0&&navigator.canShare&&navigator.canShare({files:photos})){try{await navigator.share({text:t,files:photos});return;}catch(e){if(e.name==='AbortError')return;}}navigator.clipboard.writeText(t).then(()=>alert(photos.length>0?'テキストをコピーしました！写真は別途Claudeに添付してください':'コピーしました！Claudeに貼り付けてください'));}
+async function exportFeedback(){
+  const t=buildFeedbackText();
+  const photos=[];
+  try{if(fbPhotos.bed)photos.push(new File([fbPhotos.bed],'粉床.jpg',{type:fbPhotos.bed.type||'image/jpeg'}));if(fbPhotos.liquid)photos.push(new File([fbPhotos.liquid],'抽出液.jpg',{type:fbPhotos.liquid.type||'image/jpeg'}));}catch(e){/* File creation failed */}
+  // モバイルでWeb Share API対応の場合: 写真+テキストを一括共有
+  if(photos.length>0&&navigator.share){
+    try{const shareData={text:t,files:photos};if(navigator.canShare&&navigator.canShare(shareData)){await navigator.share(shareData);return;}}catch(e){if(e.name==='AbortError')return;}
+  }
+  // フォールバック: テキストのみクリップボードにコピー
+  try{await navigator.clipboard.writeText(t);alert(photos.length>0?'テキストをコピーしました！\n写真はカメラロールからClaudeに直接添付してください':'コピーしました！\nClaudeに貼り付けてください');}catch(e){
+    // clipboard APIも失敗した場合: textarea経由のフォールバック
+    const ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);alert(photos.length>0?'テキストをコピーしました！\n写真はカメラロールからClaudeに直接添付してください':'コピーしました！\nClaudeに貼り付けてください');
+  }
+}
 function saveFeedbackLocal(){const fb=gatherFeedback();let logs=[];try{logs=JSON.parse(localStorage.getItem('brewLogs')||'[]');}catch(e){}fb.id=logs.length+1;logs.push(fb);try{localStorage.setItem('brewLogs',JSON.stringify(logs));}catch(e){}alert('保存しました！');loadLogs();}
 
 // Log
