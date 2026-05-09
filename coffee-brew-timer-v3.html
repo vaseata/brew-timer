@@ -116,8 +116,8 @@
   .preset-chip{padding:5px 12px;border-radius:20px;border:1px solid var(--accent2);background:transparent;color:var(--muted);cursor:pointer;font-size:0.75rem;transition:all .2s}
   .preset-chip:hover,.preset-chip.active{background:var(--accent);color:var(--bg);border-color:var(--accent)}
   .recipe-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
-  .recipe-summary .item{background:var(--bg);border-radius:8px;padding:8px;text-align:center}
-  .recipe-summary .item .icon{font-size:1rem}.recipe-summary .item .val{font-size:0.88rem;color:var(--accent);font-weight:600;margin:2px 0}
+  .recipe-summary .item{background:var(--bg);border-radius:8px;padding:8px;text-align:center;overflow:hidden;min-width:0}
+  .recipe-summary .item .icon{font-size:1rem}.recipe-summary .item .val{font-size:0.88rem;color:var(--accent);font-weight:600;margin:2px 0;word-break:break-word;overflow-wrap:break-word;hyphens:auto;line-height:1.3}
   .recipe-summary .item .lbl{color:var(--muted);font-size:0.62rem}
   .beep-indicator{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(224,168,112,.15);pointer-events:none;opacity:0;transition:opacity .2s;z-index:100}
   .beep-indicator.flash{opacity:1}
@@ -418,12 +418,20 @@ document.addEventListener('DOMContentLoaded',initAutoScroll);
 function parseURLRecipe(){
   const p=new URLSearchParams(location.search);
   if(!p.has('bean'))return null;
+  // 二重エンコード対策：値が%で始まっていてデコード可能なら追加デコード
+  const safeDecode=(v)=>{
+    if(!v)return v;
+    if(/%[0-9A-Fa-f]{2}/.test(v)){
+      try{return decodeURIComponent(v);}catch(e){return v;}
+    }
+    return v;
+  };
   const recipe={
-    bean:p.get('bean')||'',roast:p.get('roast')||'medium',
+    bean:safeDecode(p.get('bean'))||'',roast:p.get('roast')||'medium',
     weight:parseInt(p.get('w'))||15,water:parseInt(p.get('water'))||225,
     grind:parseInt(p.get('grind'))||16,temp:parseInt(p.get('temp'))||90,
-    dripper:p.get('dripper')||'V60 02',
-    filter:p.get('filter')||'',
+    dripper:safeDecode(p.get('dripper'))||'V60 02',
+    filter:safeDecode(p.get('filter'))||'',
     target:p.get('target')||''
   };
   const stepsStr=p.get('steps')||'';
@@ -432,7 +440,7 @@ function parseURLRecipe(){
     stepsStr.split('|').forEach(s=>{
       const parts=s.split(',');
       if(parts.length>=4){
-        parsedSteps.push({time:parseInt(parts[0])||0,duration:parseInt(parts[1])||30,pour:parseInt(parts[2])||0,op:decodeURIComponent(parts[3]||''),h:parts[4]?decodeURIComponent(parts[4]):''});
+        parsedSteps.push({time:parseInt(parts[0])||0,duration:parseInt(parts[1])||30,pour:parseInt(parts[2])||0,op:safeDecode(decodeURIComponent(parts[3]||'')),h:parts[4]?safeDecode(decodeURIComponent(parts[4])):''});
       }
     });
   }
@@ -542,6 +550,7 @@ function startBrew(){
   let cum=0;steps.forEach(s=>{cum+=s.pour;s._cumMl=cum;});
   lastBrewRecipe={bean:document.getElementById('beanName').value,roast:document.getElementById('roastLevel').value,weight:document.getElementById('beanWeight').value,water:document.getElementById('totalWater').value,ratio:document.getElementById('ratio').value,grind:document.getElementById('grindClicks').value,temp:document.getElementById('waterTemp').value,dripper:document.getElementById('dripper').value,filter:document.getElementById('filter').value,target_time:fmt(totalTime)};
   document.getElementById('fbActualTime').placeholder=fmt(totalTime)+'（提案）';
+  document.getElementById('fbActualTemp').placeholder=document.getElementById('waterTemp').value+'℃（提案）';
   document.getElementById('editorView').classList.add('hidden');document.getElementById('loadedBanner').style.display='none';
   document.getElementById('timerView').classList.add('active');renderRecipeSummary();
   document.getElementById('timerTotal').textContent=`/ ${fmt(totalTime)}`;renderStepCards();
