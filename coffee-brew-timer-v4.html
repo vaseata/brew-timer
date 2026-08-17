@@ -7,27 +7,52 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Brew Timer">
-<meta name="theme-color" content="#1a1410">
+<meta name="theme-color" content="var(--bg)">
 <meta name="description" content="Pour-over Coffee Brew Timer & Feedback">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%231a1410' width='100' height='100' rx='20'/><text x='50' y='68' text-anchor='middle' font-size='55'>☕</text></svg>">
 <style>
-  :root{--bg:#1a1410;--card:#2a2218;--accent:#c8956c;--accent2:#8b6f47;--text:#e8ddd0;--muted:#9a8b7a;--success:#6dbf7b;--active:#e0a870;--danger:#d45858}
+  :root{
+    /* 参照UI（クリーム地・ベージュカード・深緑文字・コーラルCTA）を
+       ui-color-system スキルで検算して調整。2026-08-17 */
+    --bg:#FBF8F3;         /* クリーム地 */
+    --card:#F5E7D8;       /* ベージュのカード */
+    --card2:#EFDDCB;
+    --dark:#FBF8F3;       /* 入力欄は地と同じ明るさ */
+    --text:#14532D;       /* 深緑：本文 on 地 W8.60:1 Lc+86.6 */
+    --on-bg:#14532D;
+    --on-bg-2:#3E6B52;
+    --muted:#3E6B52;      /* 副次 on カード W5.05:1 Lc+67.5 */
+    --line:#E3D3C0;
+    --coral:#F16A5A;      /* 画像のコーラル。面・大きい数字・ボタン（16px/700以上） */
+    --coral-btn:#F16A5A;  /* ボタン：白字 W3.02:1 Lc-61.6（16px/700以上が条件） */
+    --coral-deep:#C05346; /* 小さい文字を載せる必要がある場合の濃色 */
+    --on-coral:#FFFFFF;
+    --coral-ink:#3A0F08;  /* コーラル面の上の大きい数字 Lc+45.4 */
+    --accent:#F16A5A; --active:#F16A5A; --danger:#F16A5A;
+    --accent2:#E3D3C0; --teal:#14532D; --success:#14532D; --brand:#C05346;
+    --accent-ink:#FFFFFF;
+    /* HUD：この明るい世界に合わせる */
+    --hud-bg:#FBF8F3; --hud-ink:#14532D; --hud-sub:#3E6B52;
+    --hud-pour:#F5D9C8; --hud-pour-line:#F26B5B;
+    --hud-wait:#EFE9E0; --hud-wait-line:#C7BCAE;
+    --hud-warn:#F7C9BF; --hud-warn-line:#C05346;
+  }
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Helvetica Neue','Hiragino Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;padding:16px;padding-top:env(safe-area-inset-top,16px);-webkit-user-select:none;user-select:none}
   .container{max-width:600px;margin:0 auto}
-  h1{text-align:center;font-size:1.4rem;color:var(--accent);margin-bottom:4px;letter-spacing:2px}
+  h1{text-align:center;color:var(--text);font-size:1.4rem;color:var(--accent);margin-bottom:4px;letter-spacing:2px}
   .subtitle{text-align:center;color:var(--muted);font-size:0.75rem;margin-bottom:20px}
-  .tab-bar{display:flex;gap:0;margin-bottom:16px;border-radius:10px;overflow:hidden;border:1px solid var(--accent2)}
+  .tab-bar{display:flex;gap:0;margin-bottom:16px;border-radius:6px;overflow:hidden;border:1px solid var(--accent2)}
   .tab-btn{flex:1;padding:10px;text-align:center;background:var(--card);color:var(--muted);border:none;cursor:pointer;font-size:0.82rem;transition:all .2s}
   .tab-btn.active{background:var(--accent);color:var(--bg);font-weight:600}
   .tab-content{display:none}.tab-content.active{display:block}
-  .section{background:var(--card);border-radius:12px;padding:16px;margin-bottom:12px}
+  .section{background:var(--card);border-radius:6px;padding:16px;margin-bottom:12px}
   .section-title{color:var(--accent);font-size:0.85rem;font-weight:600;margin-bottom:10px}
   .form-row{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
   .form-group{flex:1;min-width:100px}
   .form-group label{display:block;color:var(--muted);font-size:0.7rem;margin-bottom:3px}
-  .form-group input,.form-group select,.form-group textarea{width:100%;background:var(--bg);border:1px solid var(--accent2);color:var(--text);padding:8px 10px;border-radius:8px;font-size:0.88rem;font-family:inherit}
+  .form-group input,.form-group select,.form-group textarea{width:100%;background:var(--bg);border:1px solid var(--accent2);color:var(--text);padding:8px 10px;border-radius:4px;font-size:0.88rem;font-family:inherit}
   .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--accent)}
   .form-group textarea{resize:vertical;min-height:50px}
   .timeline-table{width:100%;border-collapse:collapse;font-size:0.8rem}
@@ -36,7 +61,7 @@
   .timeline-table input{background:var(--bg);border:1px solid transparent;color:var(--text);padding:4px 5px;border-radius:4px;font-size:0.8rem;width:100%}
   .timeline-table input:focus{border-color:var(--accent);outline:none}
   .btn-row{display:flex;gap:8px;margin-top:8px}
-  .btn{padding:8px 16px;border:none;border-radius:8px;font-size:0.82rem;cursor:pointer;transition:all .2s}
+  .btn{padding:8px 16px;border:none;border-radius:4px;font-size:0.82rem;cursor:pointer;transition:all .2s}
   .btn-sm{padding:4px 10px;font-size:0.72rem}
   .btn-accent{background:var(--accent);color:var(--bg);font-weight:600}
   .btn-accent:hover{background:var(--active)}
@@ -47,7 +72,7 @@
   .btn-del{background:none;border:none;color:var(--danger);cursor:pointer;font-size:1rem;padding:2px 4px}
   .timer-view{display:none}.timer-view.active{display:block}.editor-view.hidden{display:none}
   /* Hero mission card */
-  .brew-hero{background:var(--card);border:2px solid var(--accent);border-radius:16px;padding:16px 20px;margin-bottom:12px;text-align:center;position:relative;overflow:hidden}
+  .brew-hero{background:var(--card);border:2px solid var(--accent);border-radius:6px;padding:16px 20px;margin-bottom:12px;text-align:center;position:relative;overflow:hidden}
   .brew-hero.waiting{border-color:var(--accent2);opacity:.6;cursor:pointer}
   .brew-hero.done{border-color:var(--success)}
   .hero-step-label{font-size:0.72rem;color:var(--muted);letter-spacing:2px;font-weight:600;margin-bottom:2px}
@@ -58,25 +83,25 @@
   .hero-deadline{font-size:1.8rem;font-weight:300;color:var(--text);font-variant-numeric:tabular-nums;opacity:.85}
   .hero-at{font-size:0.85rem;color:var(--muted);font-weight:400}
   .hero-countdown{font-size:1.1rem;color:var(--active);font-weight:600;margin-bottom:8px;font-variant-numeric:tabular-nums}
-  .hero-bar-wrap{height:6px;background:rgba(138,111,71,.15);border-radius:3px;overflow:hidden;margin-bottom:8px}
-  .hero-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--active));border-radius:3px;transition:width .3s;width:0%}
+  .hero-bar-wrap{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:8px}
+  .hero-bar{height:100%;background:var(--accent),var(--active));border-radius:3px;transition:width .3s;width:0%}
   .brew-hero.done .hero-bar{background:var(--success)}
   .hero-meta{display:flex;justify-content:center;gap:10px;align-items:center}
-  .hero-meta .badge{font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:10px}
+  .hero-meta .badge{font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:6px}
   .hero-meta .flow-badge{background:var(--accent);color:#fff}
   .hero-meta .height-badge{border:1.5px solid var(--muted);color:var(--muted)}
-  .hero-meta .height-badge[data-h="低"]{border-color:#4caf50;color:#4caf50}
+  .hero-meta .height-badge[data-h="低"]{border-color:var(--teal);color:var(--teal)}
   .hero-meta .height-badge[data-h="中"]{border-color:var(--accent);color:var(--accent)}
-  .hero-meta .height-badge[data-h="高"]{border-color:#ff5722;color:#ff5722}
+  .hero-meta .height-badge[data-h="高"]{border-color:var(--coral);color:var(--coral)}
   .hero-wait-msg{font-size:1.6rem;color:var(--muted);font-weight:300;padding:12px 0}
   /* Elapsed bar */
   .brew-elapsed{display:flex;justify-content:center;align-items:baseline;gap:8px;margin-bottom:4px}
   .elapsed-time{font-size:2rem;font-weight:200;letter-spacing:2px;color:var(--accent);font-variant-numeric:tabular-nums}
   .elapsed-total{color:var(--muted);font-size:0.82rem}
   .progress-bar-container{background:var(--bg);height:4px;border-radius:2px;margin:0 0 14px;overflow:hidden}
-  .progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--active));border-radius:2px;transition:width .3s;width:0%}
-  .step-card{background:var(--bg);border:1px solid rgba(138,111,71,.2);border-radius:10px;padding:12px 14px;margin-bottom:6px;transition:all .3s;opacity:.3;transform:scale(.97)}
-  .step-card.current{border-color:var(--success);border-width:2px;opacity:1;background:rgba(109,191,123,.08);box-shadow:0 0 24px rgba(109,191,123,.15);transform:scale(1)}
+  .progress-bar{height:100%;background:var(--accent),var(--active));border-radius:2px;transition:width .3s;width:0%}
+  .step-card{background:var(--bg);border:1px solid rgba(138,111,71,.2);border-radius:6px;padding:12px 14px;margin-bottom:6px;transition:all .3s;opacity:.3;transform:scale(.97)}
+  .step-card.current{border-color:var(--success);border-width:2px;opacity:1;background:rgba(109,191,123,.08);transform:scale(1)}
   .step-card.done{opacity:.45;border-color:var(--accent2);background:rgba(138,111,71,.04)}.step-card.next{opacity:.55}
   .step-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
   .step-num{color:var(--accent);font-weight:700;font-size:0.78rem}
@@ -84,18 +109,18 @@
   .step-time{color:var(--muted);font-size:0.75rem;font-variant-numeric:tabular-nums}
   .step-op{font-size:0.85rem;line-height:1.4}
   .step-water{display:flex;gap:14px;margin-top:4px;font-size:0.75rem;color:var(--muted);flex-wrap:wrap;align-items:center}
-  .flow-rate{background:var(--accent);color:#fff;font-size:0.68rem;font-weight:700;padding:1px 7px;border-radius:10px;letter-spacing:.02em}
-  .step-height{font-size:0.68rem;font-weight:700;padding:1px 7px;border-radius:10px;border:1.5px solid var(--muted);color:var(--fg)}
-  .step-height[data-h="低"]{border-color:#4caf50;color:#4caf50}
+  .flow-rate{background:var(--accent);color:#fff;font-size:0.68rem;font-weight:700;padding:1px 7px;border-radius:6px;letter-spacing:.02em}
+  .step-height{font-size:0.68rem;font-weight:700;padding:1px 7px;border-radius:6px;border:1.5px solid var(--muted);color:var(--fg)}
+  .step-height[data-h="低"]{border-color:var(--teal);color:var(--teal)}
   .step-height[data-h="中"]{border-color:var(--accent);color:var(--accent)}
-  .step-height[data-h="高"]{border-color:#ff5722;color:#ff5722}
+  .step-height[data-h="高"]{border-color:var(--coral);color:var(--coral)}
   .step-status{font-size:0.7rem;margin-top:3px}
   .step-status.done-text{color:var(--accent2)}.step-status.active-text{color:var(--success);font-weight:600}
   .step-progress-row{display:flex;align-items:center;gap:10px;margin-top:6px}
   .step-prog-wrap{flex:1;display:flex;flex-direction:column;gap:2px}
-  .step-prog-bar-bg{position:relative;width:100%;height:6px;background:rgba(138,111,71,.12);border-radius:3px;overflow:hidden}
-  .step-prog-bar{position:absolute;top:0;left:0;height:100%;background:linear-gradient(90deg,var(--accent),var(--active));border-radius:3px;transition:width .3s;width:0%}
-  .step-card.current .step-prog-bar{background:linear-gradient(90deg,var(--success),#8fd99a)}
+  .step-prog-bar-bg{position:relative;width:100%;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+  .step-prog-bar{position:absolute;top:0;left:0;height:100%;background:var(--accent),var(--active));border-radius:3px;transition:width .3s;width:0%}
+  .step-card.current .step-prog-bar{background:var(--accent),var(--teal))}
   .step-card.done .step-prog-bar{background:var(--accent2)}
   .step-pour-label{text-align:right;font-size:1.1rem;font-weight:700;color:var(--accent);line-height:1;font-variant-numeric:tabular-nums}
   .step-card.current .step-pour-label{color:var(--success)}
@@ -116,13 +141,13 @@
   .preset-chip{padding:5px 12px;border-radius:20px;border:1px solid var(--accent2);background:transparent;color:var(--muted);cursor:pointer;font-size:0.75rem;transition:all .2s}
   .preset-chip:hover,.preset-chip.active{background:var(--accent);color:var(--bg);border-color:var(--accent)}
   .recipe-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
-  .recipe-summary .item{background:var(--bg);border-radius:8px;padding:8px;text-align:center}
+  .recipe-summary .item{background:var(--dark);border-radius:4px;padding:8px;text-align:center}
   .recipe-summary .item .icon{font-size:1rem}.recipe-summary .item .val{font-size:0.88rem;color:var(--accent);font-weight:600;margin:2px 0}
   .recipe-summary .item .lbl{color:var(--muted);font-size:0.62rem}
-  .beep-indicator{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(224,168,112,.15);pointer-events:none;opacity:0;transition:opacity .2s;z-index:100}
+  .beep-indicator{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(240,168,48,.18);pointer-events:none;opacity:0;transition:opacity .2s;z-index:900}
   .beep-indicator.flash{opacity:1}
   /* Feedback — CVA-inspired */
-  .cva-item{background:var(--bg);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+  .cva-item{background:var(--bg);border-radius:6px;padding:10px 12px;margin-bottom:8px}
   .cva-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
   .cva-label{font-size:0.82rem;color:var(--text);font-weight:600}
   .cva-pref{display:flex;gap:4px}
@@ -140,27 +165,27 @@
   .cva-comment input{width:100%;font-size:0.72rem;padding:4px 6px;background:var(--card);border:1px solid transparent;color:var(--text);border-radius:6px}
   .cva-comment input:focus{border-color:var(--accent);outline:none}
   .cva-legend{font-size:0.65rem;color:var(--muted);text-align:center;margin-bottom:8px;line-height:1.5}
-  .photo-upload-area{border:2px dashed var(--accent2);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:8px;position:relative}
+  .photo-upload-area{border:2px dashed var(--accent2);border-radius:6px;padding:16px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:8px;position:relative}
   .photo-upload-area:hover{border-color:var(--accent);background:rgba(200,149,108,.05)}
   .photo-upload-area input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
   .photo-upload-area .icon{font-size:1.8rem;margin-bottom:2px}
   .photo-upload-area .label{color:var(--muted);font-size:0.75rem}
   .photo-preview{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
-  .photo-preview img{width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid var(--accent2)}
-  .overall-rating{display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg);border-radius:10px;margin-bottom:10px}
+  .photo-preview img{width:70px;height:70px;object-fit:cover;border-radius:4px;border:1px solid var(--accent2)}
+  .overall-rating{display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg);border-radius:6px;margin-bottom:10px}
   .overall-rating .label{font-size:0.85rem;color:var(--accent);font-weight:600}
   .overall-slider{flex:1;-webkit-appearance:none;height:5px;border-radius:3px;background:var(--accent2);outline:none}
   .overall-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--accent);cursor:pointer}
   .overall-value{font-size:1.4rem;color:var(--accent);font-weight:300;min-width:36px;text-align:center}
   .flavor-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
-  .flavor-tag{padding:4px 10px;border-radius:16px;border:1px solid var(--accent2);background:transparent;color:var(--muted);cursor:pointer;font-size:0.72rem;transition:all .2s}
+  .flavor-tag{padding:4px 10px;border-radius:6px;border:1px solid var(--accent2);background:transparent;color:var(--muted);cursor:pointer;font-size:0.72rem;transition:all .2s}
   .flavor-tag.selected{background:var(--accent);border-color:var(--accent);color:var(--bg)}
   .flavor-cat{width:100%;font-size:0.65rem;color:var(--accent);font-weight:600;margin-top:6px;margin-bottom:2px;letter-spacing:.5px}
   .feedback-export{text-align:center;margin:16px 0}
   .feedback-export .btn{font-size:1rem;padding:12px 32px}
   .export-hint{color:var(--muted);font-size:0.7rem;margin-top:6px}
   /* Log */
-  .log-entry{background:var(--bg);border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid var(--accent)}
+  .log-entry{background:var(--bg);border-radius:6px;padding:12px;margin-bottom:8px;border-left:3px solid var(--accent)}
   .log-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
   .log-date{color:var(--accent);font-size:0.78rem;font-weight:600}
   .log-score{color:var(--active);font-size:1rem;font-weight:300}
@@ -168,39 +193,342 @@
   .log-flavors{margin-top:4px}
   .log-empty{text-align:center;color:var(--muted);padding:30px;font-size:0.85rem}
   /* URL loaded banner */
-  .recipe-loaded-banner{background:linear-gradient(135deg,rgba(200,149,108,.15),rgba(200,149,108,.05));border:1px solid var(--accent);border-radius:12px;padding:14px;margin-bottom:14px;text-align:center}
+  .recipe-loaded-banner{background:var(--accent),rgba(200,149,108,.05));border:1px solid var(--accent);border-radius:6px;padding:14px;margin-bottom:14px;text-align:center}
   .recipe-loaded-banner .title{color:var(--accent);font-weight:700;font-size:0.9rem;margin-bottom:4px}
   .recipe-loaded-banner .bean-name{font-size:1.1rem;margin-bottom:8px}
   .recipe-loaded-banner .btn{font-size:1rem;padding:12px 36px}
   /* Install prompt */
-  .install-prompt{background:var(--card);border:1px solid var(--accent2);border-radius:10px;padding:12px;margin-bottom:12px;display:none;font-size:0.8rem;color:var(--muted);text-align:center}
+  .install-prompt{background:var(--card);border:1px solid var(--accent2);border-radius:6px;padding:12px;margin-bottom:12px;display:none;font-size:0.8rem;color:var(--muted);text-align:center}
   .install-prompt b{color:var(--accent)}
   @media(max-width:480px){.hero-ml{font-size:2.8rem}.hero-deadline{font-size:1.5rem}.form-row{flex-direction:column}.form-group{min-width:100%}.rating-group{flex-wrap:wrap}}
   @media(display-mode:standalone){.install-prompt{display:none!important}}
   /* QR Code Modal */
   .qr-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
   .qr-overlay.show{opacity:1;pointer-events:auto}
-  .qr-modal{background:var(--card);border-radius:16px;padding:24px;max-width:340px;width:90%;text-align:center;transform:scale(.9);transition:transform .25s}
+  .qr-modal{background:var(--card);border-radius:6px;padding:24px;max-width:340px;width:90%;text-align:center;transform:scale(.9);transition:transform .25s}
   .qr-overlay.show .qr-modal{transform:scale(1)}
   .qr-modal-title{color:var(--accent);font-size:0.9rem;font-weight:700;margin-bottom:4px}
   .qr-modal-sub{color:var(--muted);font-size:0.7rem;margin-bottom:16px}
-  .qr-canvas-wrap{background:#fff;border-radius:12px;padding:16px;display:inline-block;margin-bottom:16px}
+  .qr-canvas-wrap{background:var(--card2);border-radius:6px;padding:16px;display:inline-block;margin-bottom:16px}
   .qr-canvas-wrap canvas{display:block}
   .qr-bean-label{color:var(--text);font-size:0.85rem;margin-bottom:12px}
-  .qr-close{background:var(--accent2);color:var(--text);border:none;border-radius:8px;padding:8px 24px;cursor:pointer;font-size:0.82rem;transition:background .2s}
+  .qr-close{background:var(--accent2);color:var(--text);border:none;border-radius:4px;padding:8px 24px;cursor:pointer;font-size:0.82rem;transition:background .2s}
   .qr-close:hover{background:var(--muted)}
-  .btn-qr{background:transparent;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:0.78rem;transition:all .2s;display:inline-flex;align-items:center;gap:4px}
+  .btn-qr{background:transparent;border:1px solid var(--accent);color:var(--accent);border-radius:4px;padding:6px 14px;cursor:pointer;font-size:0.78rem;transition:all .2s;display:inline-flex;align-items:center;gap:4px}
   .btn-qr:hover{background:var(--accent);color:var(--bg)}
+
+  /* ===== 注湯HUD（2026-08-17 承認版） ===== */
+  .hud{position:fixed;inset:0;z-index:400;background:var(--hud-bg);color:var(--hud-ink);display:none;flex-direction:column;overflow:hidden}
+  .hud.on{display:flex}
+  .hud-flood{position:absolute;left:0;right:0;bottom:0;height:0%;z-index:0;background:var(--hud-pour);
+    transition:height .2s linear,background-color .35s}
+  .hud-flood::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--hud-pour-line);opacity:.95}
+  .hud.wait .hud-flood{background:var(--hud-wait)}
+  .hud.wait .hud-flood::before{background:var(--hud-wait-line)}
+  .hud.warn .hud-flood{background:var(--hud-warn);animation:hudPulse .5s ease-in-out infinite alternate}
+  .hud.warn .hud-flood::before{background:var(--hud-warn-line)}
+  @keyframes hudPulse{to{opacity:.62}}
+  @media (prefers-reduced-motion:reduce){.hud.warn .hud-flood{animation:none}}
+  .hud-tap{position:absolute;inset:0;z-index:1;border:0;background:transparent;cursor:pointer}
+  .hud-top{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:baseline;
+    padding:calc(12px + env(safe-area-inset-top)) 18px 12px;font-size:15px;color:var(--hud-sub);
+    font-variant-numeric:tabular-nums}
+  .hud-top .no{font-weight:700;color:var(--accent);letter-spacing:.06em}
+  .hud-core{position:relative;z-index:1;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
+    justify-content:center;align-items:center;padding:0 12px;gap:4px;text-align:center}
+  .hud-op{font-size:clamp(32px,9.2vw,46px);font-weight:800;line-height:1.18;color:var(--hud-ink);
+    max-width:100%;overflow-wrap:anywhere;text-wrap:balance}
+  .hud-op.op-m{font-size:clamp(26px,7.2vw,36px)}
+  .hud-op.op-s{font-size:clamp(21px,5.8vw,28px);line-height:1.3}
+  .hud-op.op-xs{font-size:clamp(18px,4.9vw,23px);line-height:1.35}
+  .hud.longop .hud-goal{font-size:clamp(64px,24vw,124px)}
+  .hud.longop .hud-next{margin-bottom:8px}
+  .hud-next{font-size:19px;color:var(--hud-sub);margin-bottom:14px;max-width:100%;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hud-next b{color:var(--hud-sub);font-weight:600}
+  .hud-goal{display:flex;align-items:baseline;gap:.04em;line-height:.9;color:var(--hud-ink);
+    font-size:clamp(92px,33vw,176px);font-weight:800;letter-spacing:-.035em;font-variant-numeric:tabular-nums}
+  .hud-goal .u{font-size:.4em;color:var(--hud-sub);font-weight:700}
+  .hud-sub{font-size:21px;color:var(--accent);font-variant-numeric:tabular-nums}
+  .hud-remain{position:relative;z-index:1;text-align:center;font-size:30px;font-weight:700;
+    color:var(--hud-sub);font-variant-numeric:tabular-nums;padding:0 16px 10px}
+  .hud-remain small{font-size:.62em;margin-left:.14em}
+  .hud-bottom{position:relative;z-index:3;display:flex;gap:8px;padding:0 14px calc(14px + env(safe-area-inset-bottom))}
+  .hud-bottom .btn{flex:1;padding:14px;font-size:.9rem}
+  .hud-badge{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3;
+    background:var(--dark);border:2px solid var(--accent);border-radius:6px;
+    padding:18px 30px;font-size:22px;font-weight:700;color:var(--hud-ink);display:none}
+  .hud.paused .hud-badge{display:block}
+  .hud.done .hud-goal{color:var(--success)}
+  .hud-cd{position:absolute;inset:0;z-index:6;background:var(--hud-bg);display:none;
+    flex-direction:column;align-items:center;justify-content:center;gap:20px}
+  .hud-cd.on{display:flex}
+  .hud-cd .lbl{font-size:19px;color:var(--hud-sub);letter-spacing:.24em}
+  .hud-cd .num{font-size:clamp(140px,42vw,210px);font-weight:800;line-height:1;color:var(--accent);
+    font-variant-numeric:tabular-nums}
+  .brew-empty{text-align:center;color:var(--muted);padding:48px 20px;font-size:.9rem;line-height:2}
+
+  .aim-btn,.foam-btn{flex:1;padding:14px 4px;background:var(--bg);color:var(--text);border:2px solid var(--accent2);
+    border-radius:6px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit}
+  .foam-btn{font-size:1.2rem;padding:16px 4px}
+  .aim-btn.sel,.foam-btn.sel{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+  details>summary{margin-bottom:8px}
+
+  .card-flavor-row{display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:8px 0;border-bottom:1px solid var(--accent2)}
+  .cf-name{font-size:.9rem;color:var(--text)}
+  .cf-btns{display:flex;gap:4px;flex:0 0 auto}
+  .cf-b{padding:6px 10px;background:var(--bg);color:var(--muted);border:1px solid var(--accent2);
+    border-radius:4px;font-size:.72rem;cursor:pointer;font-family:inherit}
+  .cf-b.sel{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600}
+
+  /* ステップ編集カード（表をやめて全文が読める形に） */
+  .step-edit{background:var(--bg);border:1px solid var(--accent2);border-radius:6px;
+    padding:12px;margin-bottom:10px}
+  .se-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .se-no{color:var(--accent);font-weight:700;font-size:.8rem;letter-spacing:.06em}
+  .se-time{color:var(--muted);font-size:.75rem;font-variant-numeric:tabular-nums;flex:1}
+  .se-del{background:transparent;border:0;color:var(--danger);font-size:1rem;cursor:pointer;padding:4px}
+  .se-op{width:100%;background:var(--card);color:var(--text);border:1px solid var(--accent2);
+    border-radius:4px;padding:9px;font-size:.86rem;line-height:1.5;font-family:inherit;resize:vertical}
+  .se-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+  .se-grid label{display:flex;align-items:center;gap:4px;color:var(--muted);font-size:.7rem}
+  .se-grid input{width:100%;min-width:0;background:var(--card);color:var(--text);
+    border:1px solid var(--accent2);border-radius:6px;padding:7px 6px;font-size:.85rem;
+    font-variant-numeric:tabular-nums}
+  .se-foot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;
+    color:var(--muted);font-size:.75rem}
+  .se-cum b{color:var(--accent);font-size:.9rem}
+  .se-h select{background:var(--card);color:var(--text);border:1px solid var(--accent2);
+    border-radius:6px;padding:5px;font-size:.78rem;margin-left:4px}
+
+  /* ===== Flat UI 仕上げ ===== */
+  body{background:var(--bg);color:var(--text)}
+  h1{letter-spacing:.04em}
+  .subtitle{color:var(--muted)}
+  .section{background:var(--card);border:1px solid var(--line);border-radius:6px}
+  .section-title{color:var(--accent);text-transform:none}
+  .tab-bar{border:0;gap:2px;background:transparent}
+  .tab-btn{background:var(--card2);color:var(--muted);border-radius:4px 4px 0 0;font-weight:600}
+  .tab-btn.active{background:var(--accent);color:var(--dark);font-weight:700}
+  .btn{border-radius:4px;font-weight:600;border:0}
+  .btn-accent{background:var(--accent);color:#fff}
+  .btn-danger{background:var(--coral);color:#fff}
+  .btn-muted{background:var(--card2);color:var(--text)}
+  .btn-qr{background:var(--teal);color:#fff;border:0;border-radius:4px}
+  input,select,textarea{background:var(--dark);color:var(--text);border:1px solid var(--line);border-radius:4px}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--teal);outline-offset:0;border-color:var(--teal)}
+  label{color:var(--muted)}
+  .flavor-tag{background:var(--card2);color:var(--dark);border:0;border-radius:4px}
+  .flavor-tag.selected{background:var(--teal);color:#fff}
+  .aim-btn,.foam-btn{background:var(--card2);border:2px solid var(--line);color:var(--dark);border-radius:4px}
+  .aim-btn.sel,.foam-btn.sel{background:var(--accent);border-color:var(--accent);color:#fff}
+  .cf-b{background:var(--dark);border:1px solid var(--line);color:var(--muted);border-radius:4px}
+  .cf-b.sel{background:var(--teal);border-color:var(--teal);color:#fff}
+  .step-edit{background:var(--card2);border:1px solid var(--line);border-radius:6px}
+  .se-op,.se-grid input,.se-h select{background:var(--dark);border:1px solid var(--line)}
+  .recipe-summary .item{background:var(--dark);border-radius:4px}
+  .cva-slider,.overall-slider{accent-color:var(--accent)}
+  .progress-bar-container{background:var(--line)}
+  .progress-bar{background:var(--teal)}
+  .beep-indicator{background:rgba(240,168,48,.18)}
+  .install-prompt{background:var(--dark);color:#fff;border:0;border-radius:6px}
+  .recipe-loaded-banner{background:var(--dark);color:#fff;border:0;border-radius:6px}
+  .recipe-loaded-banner .title{color:var(--accent)}
+  .qr-modal-inner{background:var(--card2);border-radius:6px}
+  details>summary::marker{color:var(--accent)}
+
+  /* フレーバー：2階層アコーディオン（SCA CVA準拠） */
+  .fcat{border:1px solid var(--line);border-radius:4px;margin-bottom:6px;overflow:hidden}
+  .fcat-head{width:100%;display:flex;justify-content:space-between;align-items:center;
+    padding:12px 14px;background:var(--dark);color:var(--text);border:0;cursor:pointer;
+    font-size:.9rem;font-weight:600;font-family:inherit;text-align:left}
+  .fcat-en{color:var(--muted);font-size:.68rem;font-weight:400}
+  .fcat-body{display:none;padding:10px 12px;background:var(--card2)}
+  .fcat.open .fcat-body{display:block}
+  .fcat.open .fcat-head{background:var(--accent);color:var(--dark)}
+  .fcat.open .fcat-en{color:var(--dark);opacity:.7}
+  .fgrp{color:var(--muted);font-size:.68rem;margin:8px 0 4px;letter-spacing:.06em}
+  .fcat-note{color:var(--muted);font-size:.68rem;margin-bottom:6px}
+  .flavor-tag{background:var(--dark);color:var(--text);border:1px solid var(--line);border-radius:4px}
+  .flavor-tag.selected{background:var(--teal);color:var(--dark);border-color:var(--teal);font-weight:700}
+
+  /* ===== コーラル地に合わせた仕上げ ===== */
+  body{background:var(--bg);color:var(--on-bg)}
+  h1{color:var(--on-bg);letter-spacing:.04em}
+  .subtitle{color:#FFD9D0}
+  .section{background:var(--card);border:0;border-radius:6px}
+  .section-title{color:var(--accent)}
+  .tab-bar{gap:3px;background:transparent;border:0}
+  .tab-btn{background:rgba(47,60,66,.35);color:#FFE3DC;border-radius:4px 4px 0 0;font-weight:600}
+  .tab-btn.active{background:var(--card);color:var(--accent);font-weight:700}
+  .btn-accent{background:var(--accent);color:#2F3C42}
+  .btn-danger{background:var(--danger);color:#fff}
+  .btn-muted{background:var(--card2);color:var(--text)}
+  .btn-qr{background:var(--teal);color:#2F3C42;border:0}
+  .brew-empty{color:var(--on-bg)}
+  .install-prompt,.recipe-loaded-banner{background:var(--card);color:var(--text)}
+  .brew-elapsed,.elapsed-time{color:var(--on-bg)}
+  .progress-bar-container{background:rgba(47,60,66,.35)}
+  .progress-bar{background:var(--accent)}
+  .export-hint{color:#FFD9D0}
+  .beep-indicator{background:rgba(240,173,78,.2)}
+
+  /* ===== 暖色仕上げ ===== */
+  body{background:var(--bg);color:var(--on-bg)}
+  h1{color:var(--on-bg)}
+  .subtitle{color:#C9A996}
+  .section{background:var(--card);border:0;border-radius:6px}
+  .section-title{color:var(--accent)}
+  .tab-btn{background:rgba(30,20,16,.42);color:#D9BEAE}
+  .tab-btn.active{background:var(--card);color:var(--accent);font-weight:700}
+  .btn-accent{background:var(--accent);color:#322820}
+  .btn-danger{background:var(--danger);color:#FFF3EC}
+  .btn-muted{background:var(--card2);color:var(--text)}
+  .btn-qr{background:var(--accent);color:#322820;border:0}
+  .flavor-tag.selected{background:var(--teal);color:#2B3315;border-color:var(--teal);font-weight:700}
+  .aim-btn.sel,.foam-btn.sel{background:var(--accent);border-color:var(--accent);color:#322820}
+  .cf-b.sel{background:var(--teal);border-color:var(--teal);color:#2B3315}
+  .fcat.open .fcat-head{background:var(--accent);color:#322820}
+  .fcat.open .fcat-en{color:#322820;opacity:.72}
+  .progress-bar{background:var(--accent)}
+  .progress-bar-container{background:rgba(50,40,32,.38)}
+  .beep-indicator{background:rgba(240,173,78,.22)}
+  .export-hint,.brew-empty{color:#C9A996}
+  .cva-slider,.overall-slider{accent-color:var(--accent)}
+
+  /* 検算済トークンで塗り直し */
+  .btn-accent{background:var(--accent);color:var(--accent-ink)}
+  .btn-qr{background:var(--accent);color:var(--accent-ink)}
+  .btn-danger{background:var(--danger);color:#2A0F0C}
+  .btn-muted{background:var(--card2);color:var(--text)}
+  .tab-btn{background:rgba(31,23,20,.45);color:var(--on-bg-2)}
+  .tab-btn.active{background:var(--card);color:var(--accent)}
+  .subtitle,.export-hint,.brew-empty{color:var(--on-bg-2)}
+  .flavor-tag.selected{background:var(--teal);color:#22280E}
+  .aim-btn.sel,.foam-btn.sel{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+  .cf-b.sel{background:var(--teal);color:#22280E;border-color:var(--teal)}
+  .fcat.open .fcat-head{background:var(--accent);color:var(--accent-ink)}
+  .fcat.open .fcat-en{color:var(--accent-ink);opacity:.75}
+  .hud-top .no,.section-title{color:var(--accent)}
+  .progress-bar{background:var(--accent)}
+  .elapsed-time,h1{color:var(--on-bg)}
+
+  /* ===== 参照UIの質感：明るいクリーム・大きな角丸・余白 ===== */
+  body{background:var(--bg);color:var(--text)}
+  h1{color:var(--text);font-weight:700}
+  .subtitle,.export-hint,.brew-empty{color:var(--muted)}
+  .section{background:var(--card);border:0;border-radius:22px;padding:18px}
+  .section-title{color:var(--text);font-weight:700;font-size:.95rem}
+  .tab-bar{gap:6px;border:0;background:transparent}
+  .tab-btn{background:var(--card);color:var(--muted);border-radius:14px;font-weight:600}
+  .tab-btn.active{background:var(--text);color:#FBF8F3}
+  .btn{border-radius:999px;font-weight:700;font-size:1rem;border:0;padding:16px 22px}
+  .btn-sm{font-size:1rem;font-weight:700;padding:12px 18px}  /* Lc60の前提：16px/700を下回らせない */
+  .btn-accent,.btn-qr{background:var(--coral-btn);color:var(--on-coral)}
+  .btn-danger{background:var(--coral-btn);color:var(--on-coral)}
+  .btn-muted{background:var(--card2);color:var(--text)}
+  input,select,textarea{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:14px}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--coral-btn);border-color:var(--coral-btn)}
+  label{color:var(--muted)}
+  .recipe-summary .item{background:var(--bg);border-radius:16px}
+  .recipe-summary .item .val{color:var(--text)}
+  .step-edit{background:var(--bg);border:0;border-radius:18px}
+  .se-op,.se-grid input,.se-h select{background:var(--card2);border:0}
+  .se-no{color:var(--coral-deep)} .se-cum b{color:var(--text)}
+  .flavor-tag{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:999px}
+  .flavor-tag.selected{background:var(--text);color:#FBF8F3;border-color:var(--text)}
+  .aim-btn,.foam-btn{background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:14px}
+  .aim-btn.sel,.foam-btn.sel{background:var(--coral-btn);color:var(--on-coral);border-color:var(--coral-btn)}
+  .cf-b{background:var(--bg);border:1px solid var(--line);color:var(--muted);border-radius:999px}
+  .cf-b.sel{background:var(--text);color:#FBF8F3;border-color:var(--text)}
+  .fcat{border:0;border-radius:16px;margin-bottom:8px}
+  .fcat-head{background:var(--bg);color:var(--text);border-radius:16px}
+  .fcat.open .fcat-head{background:var(--text);color:#FBF8F3;border-radius:16px 16px 0 0}
+  .fcat.open .fcat-en{color:#FBF8F3;opacity:.75}
+  .fcat-body{background:var(--bg);border-radius:0 0 16px 16px}
+  .progress-bar-container{background:var(--card2);border-radius:999px;height:8px}
+  .progress-bar{background:var(--coral)}
+  .beep-indicator{background:rgba(242,107,91,.14)}
+  .recipe-loaded-banner,.install-prompt{background:var(--card);color:var(--text);border:0;border-radius:22px}
+  .qr-modal-inner{background:var(--bg);border-radius:22px}
+  .elapsed-time{color:var(--text)}
+  /* HUD：明るい世界。水位はコーラルの淡色、数字は深緑 */
+  .hud-op,.hud-goal{color:var(--text)}
+  .hud-goal .u,.hud-remain,.hud-next,.hud-top{color:var(--muted)}
+  .hud-cd .num{color:var(--coral-btn)}
+  .hud-badge{background:var(--card);color:var(--text);border-color:var(--coral-btn)}
+  .hud-bottom .btn{border-radius:999px}
+
+  .se-hint{font-size:.68rem;color:var(--muted);margin-top:4px;text-align:right}
+  .se-hint.over{color:var(--coral-deep);font-weight:600}
+
+  /* 豆名は長くなるので1行を占有して折り返す（3列に押し込めると崩れる） */
+  .recipe-summary .item:first-child{grid-column:1 / -1}
+  .recipe-summary .item .val{overflow-wrap:anywhere;line-height:1.35}
+  .recipe-loaded-banner .bean-name{overflow-wrap:anywhere;line-height:1.4}
+  .hud-op,.hud-next{overflow-wrap:anywhere}
+
+  .qr-note{font-size:.72rem;color:var(--muted);margin-top:8px;line-height:1.6;text-align:center}
+  .qr-note.warn{color:#8A5A00}
+  .qr-note.err{color:var(--coral-deep);font-weight:600}
+  .qr-note.ok{color:var(--text);font-weight:600}
+
+  /* 完了時：画面全体を点滅（音が出せない環境でも分かるように） */
+  @keyframes hudFinish{0%,100%{background:var(--hud-bg)}50%{background:var(--coral)}}
+  .hud.finish-flash{animation:hudFinish .6s ease-in-out 8}
+  @media (prefers-reduced-motion:reduce){
+    .hud.finish-flash{animation:none;outline:8px solid var(--coral);outline-offset:-8px}}
+
+  /* ステップ手送り（濡れた手でも押せる大きさ／HUDのタップ領域より前面） */
+  .hud-nav{position:relative;z-index:4;flex:0 0 auto;width:56px;height:56px;
+    background:transparent;border:0;color:var(--hud-sub);font-size:22px;cursor:pointer;
+    border-radius:999px;font-family:inherit;line-height:1}
+  .hud-nav:active{background:rgba(20,83,45,.10);color:var(--hud-ink)}
+  .hud-nav:disabled{opacity:.25;pointer-events:none}
+  .hud-top{gap:6px}
+  .hud-top .no{flex:0 0 auto}
+  .hud-top #hudEla{flex:1 1 auto;text-align:right}
 </style>
 </head>
 <body>
 <div class="beep-indicator" id="beepFlash"></div>
+
+<!-- ==================== 注湯HUD ==================== -->
+<div class="hud" id="hud">
+  <div class="hud-flood" id="hudFlood"></div>
+  <button class="hud-tap" id="hudTap" aria-label="一時停止・再開"></button>
+  <div class="hud-badge">❚❚ 一時停止</div>
+  <div class="hud-top">
+    <button class="hud-nav" id="hudPrev" onclick="jumpStep(-1)" aria-label="前のステップへ">◀</button>
+    <span class="no" id="hudNo">STEP 1/1</span>
+    <span id="hudEla">0:00 / 0:00</span>
+    <button class="hud-nav" id="hudNext" onclick="jumpStep(1)" aria-label="次のステップへ">▶</button>
+  </div>
+  <div class="hud-core">
+    <div class="hud-op" id="hudOp"></div>
+    <div class="hud-next" id="hudNext"></div>
+    <div class="hud-goal"><span id="hudGoal">0</span><span class="u">g</span></div>
+    <div class="hud-sub" id="hudSub"></div>
+  </div>
+  <div class="hud-remain"><span id="hudRem">0</span><small>秒</small></div>
+  <div class="hud-bottom">
+    <button class="btn btn-muted" onclick="closeHud()">▼ 画面を閉じる</button>
+    <button class="btn btn-danger" onclick="stopBrew()">■ 終了</button>
+  </div>
+  <div class="hud-cd" id="hudCd">
+    <div class="lbl">構えて</div><div class="num" id="hudCdNum">5</div>
+    <button class="btn btn-muted" onclick="abortCountdown()" style="padding:14px 34px">中止</button>
+  </div>
+</div>
 <div class="qr-overlay" id="qrOverlay" onclick="if(event.target===this)closeQR()">
   <div class="qr-modal">
     <div class="qr-modal-title">📱 スマホでスキャン</div>
     <div class="qr-modal-sub">このレシピをスマホのBrew Timerで開けます</div>
     <div class="qr-bean-label" id="qrBeanLabel"></div>
     <div class="qr-canvas-wrap"><canvas id="qrCanvas"></canvas></div>
+    <div class="qr-note" id="qrNote"></div>
+    <button class="btn btn-muted" onclick="copyRecipeURL()" style="margin-top:10px">🔗 URLをコピー</button>
     <br>
     <button class="qr-close" onclick="closeQR()">閉じる</button>
   </div>
@@ -216,37 +544,36 @@
   </div>
 
   <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('brew')">抽出</button>
+    <button class="tab-btn active" onclick="switchTab('recipe')">レシピ</button>
+    <button class="tab-btn" onclick="switchTab('brew')">抽出</button>
     <button class="tab-btn" onclick="switchTab('feedback')">FB</button>
-    <button class="tab-btn" onclick="switchTab('log')">記録</button>
   </div>
 
   <!-- ==================== BREW TAB ==================== -->
-  <div class="tab-content active" id="tab-brew">
+  <div class="tab-content active" id="tab-recipe">
     <div id="loadedBanner" class="recipe-loaded-banner" style="display:none">
       <div class="title">Claudeのレシピを読み込みました</div>
       <div class="bean-name" id="bannerBean"></div>
       <div style="display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap">
-        <button class="btn btn-accent" onclick="startBrew()">▶ このレシピで抽出スタート</button>
+        <button class="btn btn-accent" onclick="startBrew()">▶ このレシピで抽出する</button>
         <button class="btn-qr" onclick="showQR()">📱 QR</button>
       </div>
     </div>
     <div class="editor-view" id="editorView">
       <div class="section">
-        <div class="section-title">プリセット</div>
-        <div class="preset-bar" id="presetBar"></div>
-      </div>
-      <div class="section">
         <div class="section-title">基本パラメータ</div>
         <input type="hidden" id="roastLevel" value="medium">
         <div class="form-row">
-          <div class="form-group"><label>豆の名前</label><input type="text" id="beanName" value="スプリングブレンド"></div>
+          <div class="form-group"><label>豆の名前</label><input type="text" id="beanName" value="スプリングブレンド" oninput="capLen(this,BEAN_MAX,'beanHint')"><div class="se-hint" id="beanHint"></div></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>カードのフレーバー（カンマ区切り）</label><input type="text" id="cardFlavorSrc" placeholder="プラム, ドライベリー, チョコレート"></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>ドリッパー</label>
-            <select id="dripper" onchange="autoSelectFilter()"><option value="V60 01">V60 01</option><option value="V60 02" selected>V60 02</option><option value="V60 NEO 01">V60 NEO 01</option><option value="V60 NEO 02">V60 NEO 02</option><option value="V60 MUGEN">V60 MUGEN</option><option value="Kalita 155">Kalita 155</option><option value="スイッチ">スイッチ</option><option value="ネルドリップ">ネルドリップ</option></select></div>
+            <select id="dripper" onchange="autoSelectFilter()"><option value="V60 01">V60 01</option><option value="V60 02" selected>V60 02</option><option value="V60 NEO 01">V60 NEO 01</option><option value="V60 NEO 02">V60 NEO 02</option><option value="V60 MUGEN">V60 MUGEN</option><option value="Kalita 155">Kalita 155</option><option value="KONO 名門 MDK-21">KONO 名門ドリッパー MDK-21</option><option value="スイッチ">スイッチ</option><option value="ネルドリップ">ネルドリップ</option></select></div>
           <div class="form-group"><label>フィルター</label>
-            <select id="filter"><option value="HARIO V60ペーパー 白 1-2杯">HARIO V60ペーパー 白 1-2杯</option><option value="CAFEC アバカ 円錐 2-4杯" selected>CAFEC アバカ 円錐 2-4杯</option><option value="カリタ ウェーブ 155">カリタ ウェーブ 155</option><option value="ネルフィルター">ネルフィルター</option></select></div>
+            <select id="filter"><option value="HARIO V60ペーパー 白 1-2杯">HARIO V60ペーパー 白 1-2杯</option><option value="HARIO V60ペーパー 白 2-4杯">HARIO V60ペーパー 白 2-4杯</option><option value="CAFEC アバカ 円錐 1-2杯">CAFEC アバカ 円錐 1-2杯</option><option value="CAFEC アバカ 円錐 2-4杯" selected>CAFEC アバカ 円錐 2-4杯</option><option value="KONO 円すいペーパー MD-25">KONO 円すいペーパー MD-25</option><option value="カリタ ウェーブ 155">カリタ ウェーブ 155</option><option value="ネルフィルター">ネルフィルター</option></select></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>レシオ</label><input type="text" id="ratio" value="1:15" readonly style="color:var(--muted)"></div>
@@ -254,15 +581,14 @@
           <div class="form-group"><label>C2クリック数</label><input type="number" id="grindClicks" value="16" min="8" max="30"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>総湯量 (ml)</label><input type="number" id="totalWater" value="225" min="100" max="500"></div>
+          <div class="form-group"><label>総湯量 (g)</label><input type="number" id="totalWater" value="225" min="100" max="500"></div>
           <div class="form-group"><label>湯温 (℃)</label><input type="number" id="waterTemp" value="90" min="75" max="100"></div>
           <div class="form-group"><label>目標抽出時間</label><input type="text" id="targetTime" value="" readonly style="color:var(--muted)" placeholder="タイムラインから自動計算"></div>
         </div>
       </div>
       <div class="section" id="timelineSection">
         <div class="section-title">抽出タイムライン</div>
-        <table class="timeline-table"><thead><tr><th>#</th><th>開始</th><th>秒数</th><th>ml</th><th>累計</th><th>ml/s</th><th>高さ</th><th>オペレーション</th><th></th></tr></thead>
-          <tbody id="timelineBody"></tbody></table>
+        <div id="stepEditor"></div>
         <div class="btn-row"><button class="btn btn-muted btn-sm" onclick="addStep()">+ ステップ</button></div>
       </div>
       <div style="text-align:center;margin:16px 0;display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap">
@@ -270,27 +596,20 @@
         <button class="btn-qr" onclick="showQR()">📱 QR</button>
       </div>
     </div>
+  </div>
+
+  <div class="tab-content" id="tab-brew">
+    <div class="brew-empty" id="brewEmpty">レシピタブでステップを作ると<br>ここに抽出画面が出ます</div>
     <div class="timer-view" id="timerView">
       <div class="section" style="padding:10px 14px"><div class="recipe-summary" id="recipeSummary"></div></div>
-      <div class="brew-hero" id="brewHero" onclick="if(!timerRunning&&elapsed===0)beginTimer()">
-        <div class="hero-step-label" id="heroStepLabel">準備完了</div>
-        <div class="hero-op" id="heroOp"></div>
-        <div class="hero-target" id="heroTarget">
-          <div class="hero-wait-msg">▶ スタートで開始</div>
-        </div>
-        <div class="hero-countdown" id="heroCountdown" style="display:none"></div>
-        <div class="hero-bar-wrap" id="heroBarWrap" style="display:none"><div class="hero-bar" id="heroBar"></div></div>
-        <div class="hero-meta" id="heroMeta"></div>
-      </div>
       <div class="brew-elapsed">
         <span class="elapsed-time" id="timerDisplay">0:00</span>
         <span class="elapsed-total" id="timerTotal"></span>
       </div>
       <div class="progress-bar-container"><div class="progress-bar" id="progressBar"></div></div>
-      <div id="stepCards"></div>
       <div class="timer-controls">
         <button class="btn btn-accent" id="startBtn" onclick="beginTimer()" style="background:var(--success)">▶ スタート</button>
-        <button class="btn btn-accent" id="pauseBtn" onclick="togglePause()" style="display:none">⏸ 一時停止</button>
+        <button class="btn btn-accent" id="reopenBtn" onclick="openHud()">▲ 抽出画面</button>
         <button class="btn btn-danger" onclick="stopBrew()">■ 終了</button>
       </div>
     </div>
@@ -304,43 +623,68 @@
         <div class="form-group"><label>実際の抽出時間</label><input type="text" id="fbActualTime" placeholder="2:35"></div>
         <div class="form-group"><label>実際の湯温</label><input type="text" id="fbActualTemp" placeholder="86℃"></div>
       </div>
+      <div class="form-row">
+        <div class="form-group"><label>抽出液の重さ (g)</label><input type="number" id="fbBeverage" placeholder="211"></div>
+        <div class="form-group"><label>ケトル</label><select id="fbKettle"><option value="">—</option><option>無印</option><option>EPEIOS</option></select></div>
+      </div>
       <div class="form-group" style="margin-bottom:10px"><label>気になった点・変更点</label><textarea id="fbNotes" placeholder="2投目でやや速く注ぎすぎた"></textarea></div>
     </div>
+
     <div class="section">
-      <div class="section-title">📸 写真（Claudeが画像判定します）</div>
-      <div style="display:flex;gap:10px">
-        <div style="flex:1">
-          <div class="photo-upload-area"><input type="file" accept="image/*" onchange="previewPhoto(this,'bedPreview')"><div class="icon">📸</div><div class="label">粉床</div></div>
-          <div class="photo-preview" id="bedPreview"></div>
-          <div id="bedTimingAuto" style="font-size:.68rem;color:var(--accent);margin-top:4px;text-align:center;display:none"></div>
-        </div>
-        <div style="flex:1">
-          <div class="photo-upload-area"><input type="file" accept="image/*" onchange="previewPhoto(this,'liquidPreview')"><div class="icon">📸</div><div class="label">抽出液</div></div>
-          <div class="photo-preview" id="liquidPreview"></div>
-          <div id="liqTimingAuto" style="font-size:.68rem;color:var(--accent);margin-top:4px;text-align:center;display:none"></div>
-        </div>
+      <div class="section-title">🎯 狙いは出たか</div>
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <button class="aim-btn" data-aim="出た" onclick="setAim(this)">出た</button>
+        <button class="aim-btn" data-aim="出なかった" onclick="setAim(this)">出なかった</button>
+        <button class="aim-btn" data-aim="別のものが出た" onclick="setAim(this)">別のが出た</button>
       </div>
-      <div style="color:var(--muted);font-size:0.68rem;margin-top:6px;text-align:center">平坦さ・壁面付着・色の濃さ・透明度はClaudeが写真から判定します</div>
+      <div class="form-group"><input type="text" id="fbAimMemo" placeholder="どうズレたか（一言）"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">🫧 白い泡レベル（注湯フェーズ）</div>
+      <div style="display:flex;gap:6px">
+        <button class="foam-btn" data-foam="1" onclick="setFoam(this)">1</button>
+        <button class="foam-btn" data-foam="2" onclick="setFoam(this)">2</button>
+        <button class="foam-btn" data-foam="3" onclick="setFoam(this)">3</button>
+        <button class="foam-btn" data-foam="4" onclick="setFoam(this)">4</button>
+        <button class="foam-btn" data-foam="5" onclick="setFoam(this)">5</button>
+      </div>
+      <div style="color:var(--muted);font-size:.68rem;margin-top:6px">1=ほぼ無い / 3=部分的 / 4=全面を覆う / 5=厚く持続。<b>読むのは注湯中の泡</b></div>
     </div>
     <div class="section">
-      <div class="section-title">👅 官能評価（CVAベース）</div>
-      <div class="cva-legend">スライダー = 感じた<b>強さ</b>（弱←→強）/ 右の顔 = <b>好み</b>（😊良い 😐普通 😞不快）</div>
-      <div id="sensoryRatings"></div>
+      <div class="section-title">📸 写真の時刻</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-muted" onclick="markPhoto('bed')" style="flex:1">📸 粉床を撮った<br><span id="bedTimeLbl" style="font-size:.7rem;color:var(--accent)">—</span></button>
+        <button class="btn btn-muted" onclick="markPhoto('liq')" style="flex:1">📸 抽出液を撮った<br><span id="liqTimeLbl" style="font-size:.7rem;color:var(--accent)">—</span></button>
+      </div>
+      <div style="color:var(--muted);font-size:.68rem;margin-top:6px;text-align:center">写真はスマホのカメラで撮り、Claudeに直接貼ってください。ここでは<b>撮った時刻</b>だけ記録します</div>
+    </div>
+    <div class="section">
+      <details>
+        <summary class="section-title" style="cursor:pointer;list-style:revert">👅 官能評価（任意・ブルームが指定した回だけ）</summary>
+        <div class="cva-legend">スライダー = 感じた<b>強さ</b> / 右の顔 = <b>好み</b>。<b>触らなければ「未入力」として記録されます</b>（適当に入れるより空欄のほうが正確）</div>
+        <div id="sensoryRatings"></div>
+      </details>
       <div class="overall-rating">
         <div class="label">総合</div>
-        <input type="range" class="overall-slider" id="fbOverall" min="1" max="10" value="7" oninput="document.getElementById('overallVal').textContent=this.value">
-        <div class="overall-value" id="overallVal">7</div><div style="color:var(--muted);font-size:0.7rem">/10</div>
+        <input type="range" class="overall-slider" id="fbOverall" min="1" max="10" value="7" data-touched="0" oninput="this.dataset.touched='1';document.getElementById('overallVal').textContent=this.value">
+        <div class="overall-value" id="overallVal">—</div><div style="color:var(--muted);font-size:0.7rem">/10</div>
       </div>
       <div class="form-group" style="margin-top:6px"><input type="text" id="fbOverallMemo" placeholder="総合メモ（例：バランスが良い、もう少し甘さが欲しい）" style="font-size:0.78rem"></div>
     </div>
     <div class="section">
-      <div class="section-title">🍫 フレーバー</div>
+      <div class="section-title">👅 基本の味（際立ったものだけ・最大2）</div>
+      <div id="mainTastes" style="margin-bottom:16px"></div>
+      <div class="section-title">🍫 カードのフレーバーは出たか</div>
+      <div id="cardFlavors" style="margin-bottom:12px"></div>
+      <div class="section-title" style="font-size:.78rem">その他に感じたもの</div>
       <div id="flavorTags"></div>
       <div class="form-group" style="margin-top:8px"><label>その他</label><input type="text" id="fbFlavorOther" placeholder="自由記入"></div>
     </div>
     <div class="section">
       <div class="section-title">✋ テクスチャー・口当たり</div>
       <div class="flavor-tags" id="textureTags"></div>
+      <div class="form-group" style="margin-top:8px"><label>その他（自由記入）</label><input type="text" id="fbTextureOther" placeholder="きめの細かい / じわっと残る など"></div>
     </div>
     <div class="section">
       <div class="section-title">🎯 次回リクエスト</div>
@@ -349,24 +693,10 @@
     </div>
     <div class="feedback-export">
       <button class="btn btn-accent" onclick="exportFeedback()">📋 写真付き共有 → Claudeへ</button>
-      <button class="btn btn-muted" onclick="saveFeedbackLocal()" style="margin-left:6px">💾 保存</button>
-      <div class="export-hint">写真付きで共有 or テキストのみコピー / 保存で記録タブに追加</div>
+      <div class="export-hint">テキストをコピーしてClaudeに貼り付け</div>
     </div>
   </div>
 
-  <!-- ==================== LOG TAB ==================== -->
-  <div class="tab-content" id="tab-log">
-    <div class="section">
-      <div class="section-title">📊 Brew Journal</div>
-      <div id="logEntries"><div class="log-empty">まだ記録がありません</div></div>
-    </div>
-    <div style="text-align:center;margin:12px 0">
-      <button class="btn btn-muted btn-sm" onclick="importLogs()">📤 インポート</button>
-      <button class="btn btn-muted btn-sm" onclick="exportAllLogsEnhanced()" style="margin-left:6px">📥 エクスポート</button>
-      <button class="btn btn-muted btn-sm" onclick="clearLogs()" style="margin-left:6px;color:var(--danger)">🗑 全削除</button>
-      <div style="font-size:.68rem;color:var(--muted);margin-top:6px">brew-log.json (Claude) 形式に対応</div>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -389,30 +719,80 @@ const sensoryItems=[
   {key:'clean',label:'クリーンさ',lo:'濁り',hi:'透明'}
 ];
 const flavorCategories={
-  '🍎 フルーツ':['赤リンゴ','青リンゴ','オレンジ','レモン','グレープフルーツ','プラム','さくらんぼ','ベリー','ブルーベリー','黄桃','白桃','マスカット','トロピカル','マンゴー','パッションフルーツ','ライチ'],
-  '🌸 花・茶':['花','ジャスミン','ローズ','アールグレイ','緑茶','紅茶','ハーブ','ラベンダー'],
-  '🍫 甘さ・ナッツ':['チョコレート','ダークチョコ','ナッツ','アーモンド','キャラメル','黒糖','はちみつ','メープル','バニラ','キャンディー','トフィー'],
-  '🌿 その他':['スパイス','シナモン','クローブ','ワイン','穀物','煙','ウイスキー','カカオニブ']
+ floral:{ja:"花・茶",en:"Floral",emoji:"🌸",tags:[
+   {ja:"フローラル",en:"Floral"},{ja:"ジャスミン",en:"Jasmine"},{ja:"ローズ",en:"Rose"},
+   {ja:"カモミール",en:"Chamomile"},{ja:"紅茶",en:"Black Tea"},{ja:"アールグレイ",en:"Earl Grey"},
+   {ja:"ダージリン",en:"Darjeeling"},{ja:"緑茶",en:"Green Tea"}]},
+ fruity:{ja:"フルーツ",en:"Fruity",emoji:"🍎",groups:[
+   {ja:"ベリー",tags:[{ja:"ベリー",en:"Berry"},{ja:"ブルーベリー",en:"Blueberry"},{ja:"ストロベリー",en:"Strawberry"},
+     {ja:"ラズベリー",en:"Raspberry"},{ja:"ブラックベリー",en:"Blackberry"},{ja:"クランベリー",en:"Cranberry"},{ja:"カシス",en:"Blackcurrant"}]},
+   {ja:"ドライフルーツ",tags:[{ja:"レーズン",en:"Raisin"},{ja:"プルーン",en:"Prune"},{ja:"ドライベリー",en:"Dried Berry"},{ja:"あんず",en:"Apricot"}]},
+   {ja:"柑橘",tags:[{ja:"オレンジ",en:"Orange"},{ja:"グレープフルーツ",en:"Grapefruit"},{ja:"レモン",en:"Lemon"},
+     {ja:"ライム",en:"Lime"},{ja:"みかん・甘夏",en:"Mandarin"}]},
+   {ja:"その他の果実",tags:[{ja:"赤リンゴ",en:"Red Apple"},{ja:"青リンゴ",en:"Green Apple"},{ja:"さくらんぼ",en:"Cherry"},
+     {ja:"黄桃",en:"Yellow Peach"},{ja:"白桃",en:"White Peach"},{ja:"洋ナシ",en:"Pear"},{ja:"プラム",en:"Plum"},
+     {ja:"マスカット",en:"Grape"},{ja:"パイナップル",en:"Pineapple"},{ja:"ココナッツ",en:"Coconut"},{ja:"トロピカル",en:"Tropical"}]}]},
+ sourFermented:{ja:"酸・発酵",en:"Sour/Fermented",emoji:"🍋",groups:[
+   {ja:"酸",tags:[{ja:"酸っぱい",en:"Sour"},{ja:"クエン酸様",en:"Citric"},{ja:"リンゴ酸様",en:"Malic"},{ja:"酢酸様",en:"Acetic"}]},
+   {ja:"発酵",tags:[{ja:"発酵感",en:"Fermented"},{ja:"ワイン様",en:"Winey"},{ja:"ロゼワイン",en:"Rose Wine"},
+     {ja:"ウイスキー様",en:"Whiskey"},{ja:"熟しすぎ",en:"Overripe"}]}]},
+ greenVeg:{ja:"青み・植物",en:"Green/Vegetative",emoji:"🌿",tags:[
+   {ja:"青草",en:"Green"},{ja:"未熟",en:"Under-ripe"},{ja:"さやえんどう",en:"Peapod"},{ja:"豆っぽい",en:"Beany"},
+   {ja:"干し草",en:"Hay"},{ja:"ハーブ",en:"Herb"},{ja:"ハーバル",en:"Herbal"},{ja:"トマト",en:"Tomato"},{ja:"オリーブオイル",en:"Olive Oil"}]},
+ nuttyCocoa:{ja:"ナッツ・カカオ",en:"Nutty/Cocoa",emoji:"🌰",groups:[
+   {ja:"ナッツ",tags:[{ja:"ナッツ",en:"Nutty"},{ja:"アーモンド",en:"Almond"},{ja:"ヘーゼルナッツ",en:"Hazelnut"},
+     {ja:"ピーナッツ",en:"Peanut"},{ja:"カシューナッツ",en:"Cashew"}]},
+   {ja:"カカオ",tags:[{ja:"チョコレート",en:"Chocolate"},{ja:"ダークチョコ",en:"Dark Chocolate"},{ja:"ココア",en:"Cocoa"},{ja:"カカオニブ",en:"Cacao Nibs"}]}]},
+ sweet:{ja:"甘い香り",en:"Sweet (aroma)",emoji:"🍯",note:"※味の甘味は「基本の味」で選ぶ",groups:[
+   {ja:"ブラウンシュガー系",tags:[{ja:"黒糖",en:"Brown Sugar"},{ja:"糖蜜",en:"Molasses"},{ja:"メープル",en:"Maple"},
+     {ja:"はちみつ",en:"Honey"},{ja:"キャラメル",en:"Caramelized"},{ja:"上白糖",en:"White Sugar"}]},
+   {ja:"バニラ",tags:[{ja:"バニラ",en:"Vanilla"}]},
+   {ja:"甘い香り全般",tags:[{ja:"トフィー",en:"Toffee"},{ja:"ヌガー",en:"Nougat"},{ja:"キャンディー",en:"Candy"},{ja:"クッキー",en:"Cookie"}]}]},
+ spice:{ja:"スパイス",en:"Spice",emoji:"🌶",tags:[
+   {ja:"スパイス",en:"Spice"},{ja:"シナモン",en:"Cinnamon"},{ja:"クローブ",en:"Clove"},
+   {ja:"ナツメグ",en:"Nutmeg"},{ja:"アニス",en:"Anise"},{ja:"黒こしょう",en:"Pepper"}]},
+ roasted:{ja:"ロースト",en:"Roasted",emoji:"🔥",groups:[
+   {ja:"穀物",tags:[{ja:"穀物",en:"Grain"},{ja:"麦芽",en:"Malt"}]},
+   {ja:"焦げ",tags:[{ja:"焦げ",en:"Burnt"},{ja:"煙",en:"Smoky"},{ja:"灰っぽい",en:"Ashy"},{ja:"ロースト",en:"Roast"}]},
+   {ja:"タバコ",tags:[{ja:"タバコ",en:"Tobacco"},{ja:"パイプタバコ",en:"Pipe Tobacco"}]}]},
+ other:{ja:"その他・欠点",en:"Other",emoji:"⚠️",groups:[
+   {ja:"薬品系",tags:[{ja:"薬品様",en:"Medicinal"},{ja:"ゴム",en:"Rubber"},{ja:"石油",en:"Petroleum"},{ja:"フェノール",en:"Phenolic"}]},
+   {ja:"カビ・土",tags:[{ja:"カビ臭",en:"Moldy"},{ja:"土っぽい",en:"Earthy"},{ja:"ほこりっぽい",en:"Dusty"},{ja:"紙・段ボール",en:"Papery"}]},
+   {ja:"木質",tags:[{ja:"木質",en:"Woody"},{ja:"枯れた",en:"Stale"}]},
+   {ja:"ノイズ",tags:[{ja:"雑味",en:"Off-note"},{ja:"エグ味",en:"Harsh"}]}]}
 };
-const textureOptions=['シルキー','ミルキー','サラサラ','ツヤツヤ','蜜のよう','オイリー','クリーン','優しい','硬い','雑味','ドライ','ジューシー','丸い','クリーミー'];
+// 基本の味（SCA-103 §5.2）— 最大2個
+const mainTastes=[{ja:"甘味",en:"Sweet"},{ja:"酸味",en:"Sour"},{ja:"苦味",en:"Bitter"},{ja:"塩味",en:"Salty"},{ja:"うま味",en:"Umami"}];
+// テクスチャー（SCA-103 §5.3 の5分類＋この家の語彙）
+const textureCategories={
+ smooth:{ja:"なめらか",en:"Smooth",tags:["とろみ","シルキー","蜜のよう","クリーミー","まろやか・丸い","キメ細やか","コーティング","ジューシー"]},
+ oily:{ja:"オイリー",en:"Oily",tags:["オイリー"]},
+ rough:{ja:"ざらつく",en:"Rough",tags:["ザラつき","硬い","角がある"]},
+ drying:{ja:"口が渇く",en:"Mouth-Drying",tags:["渋み","ドライ"]},
+ metallic:{ja:"金属的",en:"Metallic",tags:["金属的"]},
+ house:{ja:"この家の語彙",en:"House",tags:["サラサラ","優しい","軽い"]}
+};
 
 let steps=[],timerInterval=null,elapsed=0,isPaused=false,totalTime=0,audioCtx=null,lastBrewRecipe=null,urlLoaded=false,brewStartTime=null;
+let lastStepIdx=-1,warnedAt=-1,finished=false,wakeLockRef=null,cdTimer=null,lastSaved=0;
+const SESSION_KEY='brewSession';
+const OP_MAX=25;   // 仕様：オペレーションは最大25文字
+const BEAN_MAX=40; // 豆名の上限（brew-log.json の実データが最長40字前後のため）
+function capLen(el,max,hintId){
+  let a=[...el.value];
+  if(a.length>max){el.value=a.slice(0,max).join('');a=[...el.value];}
+  const h=document.getElementById(hintId);
+  if(h){h.textContent=`${a.length} / ${max}`;h.classList.toggle('over',a.length>=max);}
+}
+function stripOpLabel(t){return String(t||'').trim().replace(/^[^:：]{1,8}[:：]\s*/,'');}
+function normalizeOp(t){const a=[...stripOpLabel(t)];return a.length>OP_MAX?a.slice(0,OP_MAX).join(''):a.join('');}
+function opOverflow(t){return [...stripOpLabel(t)].length>OP_MAX;}
+const COUNTDOWN_SEC=5;
 let pausedDuration=0,pausedAt=null,lastNotifiedStep=-1,timerRunning=false;
 let lastInteraction=0,autoScrollTimer=null;
-function initAutoScroll(){const tv=document.getElementById('timerView');['touchstart','touchmove','scroll','mousedown','wheel'].forEach(ev=>tv.addEventListener(ev,()=>{lastInteraction=Date.now();clearTimeout(autoScrollTimer);},true));}
-function scheduleAutoScroll(stepIdx){clearTimeout(autoScrollTimer);if(stepIdx<0)return;const sinceInteraction=Date.now()-lastInteraction;const delay=Math.max(0,3000-sinceInteraction);autoScrollTimer=setTimeout(()=>{const el=document.getElementById(`step-${stepIdx}`);if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});},delay);}
+function initAutoScroll(){}
+function scheduleAutoScroll(){}
 function calcElapsed(){if(!brewStartTime)return 0;const now=isPaused?pausedAt:Date.now();return Math.floor((now-brewStartTime-pausedDuration)/1000);}
-// Background recovery
-document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible'&&timerRunning&&!isPaused){
-    const prev=elapsed;elapsed=calcElapsed();
-    // Fire missed step notifications
-    steps.forEach(s=>{if(s.time>prev&&s.time<=elapsed){doubleBeep();if(navigator.vibrate)navigator.vibrate([200,100,200]);}});
-    if(elapsed>=totalTime&&prev<totalTime){beep(660,.3);setTimeout(()=>beep(880,.3),400);setTimeout(()=>beep(1100,.5),800);if(navigator.vibrate)navigator.vibrate([300,150,300,150,500]);}
-    updateTimerDisplay();
-  }
-});
-document.addEventListener('DOMContentLoaded',initAutoScroll);
 
 // ===== URL PARAMS =====
 function parseURLRecipe(){
@@ -429,12 +809,23 @@ function parseURLRecipe(){
   const stepsStr=p.get('steps')||'';
   const parsedSteps=[];
   if(stepsStr){
+    let prevOp='', broken=false;
     stepsStr.split('|').forEach(s=>{
       const parts=s.split(',');
-      if(parts.length>=4){
-        parsedSteps.push({time:parseInt(parts[0])||0,duration:parseInt(parts[1])||30,pour:parseInt(parts[2])||0,op:decodeURIComponent(parts[3]||''),h:parts[4]?decodeURIComponent(parts[4]):''});
-      }
+      if(parts.length<3)return;                       // 明らかに欠けた断片は捨てる
+      let raw='';
+      try{ raw=decodeURIComponent(parts[3]||''); }
+      catch(e){ broken=true; raw=''; }                // 途中で切れた%エスケープ
+      if(raw.indexOf('\uFFFD')>=0){broken=true;raw=raw.replace(/\uFFFD/g,'');}
+      let op=normalizeOp(raw);
+      if(!op) op=prevOp;                              // 空欄＝直前と同じ（URL短縮の仕様）
+      prevOp=op;
+      parsedSteps.push({time:parseInt(parts[0])||0,duration:parseInt(parts[1])||30,
+        pour:parseInt(parts[2])||0,op,h:parts[4]?decodeURIComponent(parts[4]):''});
     });
+    if(broken) setTimeout(()=>alert(
+      'レシピURLが途中で切れています。ステップが欠けているか、説明が壊れている可能性があります。\n'
+      +'読み込んだステップ数：'+parsedSteps.length+'\nQRではなくURLのコピーで開き直してください。'),400);
   }
   return {recipe,steps:parsedSteps};
 }
@@ -468,7 +859,7 @@ function loadFromURL(data){
   renderTimeline();updateRatio();
   if(r.target){document.getElementById('targetTime').value=r.target;document.getElementById('targetTime').style.color='var(--accent)';document.getElementById('targetTime').style.fontWeight='600';}
   const targetStr=r.target?` / 目標${r.target}`:'';
-  document.getElementById('bannerBean').textContent=`${r.bean} — ${r.weight}g / ${r.water}ml / C2 ${r.grind}cl / ${r.temp}℃${targetStr}`;
+  document.getElementById('bannerBean').textContent=`${r.bean} — ${r.weight}g / ${r.water}g / C2 ${r.grind}cl / ${r.temp}℃${targetStr}`;
   document.getElementById('loadedBanner').style.display='block';
   urlLoaded=true;
   document.querySelectorAll('.preset-chip').forEach(c=>c.classList.remove('active'));
@@ -476,7 +867,9 @@ function loadFromURL(data){
 
 // ===== INIT =====
 function init(){
-  renderPresets();renderSensoryRatings();renderFlavorTags();loadLogs();
+  renderSensoryRatings();renderFlavorTags();
+  document.getElementById('hudTap').addEventListener('click',togglePause);
+  if(!restoreSession())prepareBrew();
   document.getElementById('beanWeight').addEventListener('input',updateRatio);
   document.getElementById('totalWater').addEventListener('input',updateRatio);
   const urlData=parseURLRecipe();
@@ -492,20 +885,19 @@ function showInstallHint(){
 }
 
 function switchTab(name){
-  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',['brew','feedback','log'][i]===name));
+  if(name==='feedback')renderCardFlavors();
+  if(name==='brew')prepareBrew();
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',['recipe','brew','feedback'][i]===name));
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
-  if(name==='log')loadLogs();
 }
+
 function updateRatio(){
   const w=parseFloat(document.getElementById('beanWeight').value)||1;
   const water=parseFloat(document.getElementById('totalWater').value)||0;
   document.getElementById('ratio').value=`1:${(water/w).toFixed(1)}`;
 }
-function renderPresets(){
-  const bar=document.getElementById('presetBar');bar.innerHTML='';
-  presets.forEach((p,i)=>{const c=document.createElement('button');c.className='preset-chip';c.textContent=p.name;c.onclick=()=>{loadPreset(i);document.getElementById('loadedBanner').style.display='none';urlLoaded=false;};bar.appendChild(c);});
-}
+function renderPresets(){}
 function loadPreset(idx){
   const p=presets[idx];
   document.getElementById('beanName').value=p.bean;document.getElementById('roastLevel').value=p.roast;
@@ -517,93 +909,294 @@ function loadPreset(idx){
   document.querySelectorAll('.preset-chip').forEach((c,i)=>c.classList.toggle('active',i===idx));
 }
 function renderTimeline(){
-  const tbody=document.getElementById('timelineBody');tbody.innerHTML='';let cum=0;
-  steps.forEach((s,i)=>{cum+=s.pour;const tr=document.createElement('tr');
-    const rate=s.pour>0&&s.duration>0?(s.pour/s.duration).toFixed(1):'—';const hVal=s.h||'';tr.innerHTML=`<td style="color:var(--accent);font-weight:600">${i+1}</td><td><input type="number" value="${s.time}" onchange="updateStep(${i},'time',this.value)" style="width:44px"></td><td><input type="number" value="${s.duration}" onchange="updateStep(${i},'duration',this.value)" style="width:44px"></td><td><input type="number" value="${s.pour}" onchange="updateStep(${i},'pour',this.value)" style="width:44px"></td><td style="color:var(--muted)">${cum}</td><td style="color:var(--accent);font-weight:600;font-size:.78rem">${rate}</td><td><select onchange="updateStep(${i},'h',this.value)" style="width:46px;font-size:.75rem"><option value=""${hVal===''?' selected':''}> </option><option value="低"${hVal==='低'?' selected':''}>低</option><option value="中"${hVal==='中'?' selected':''}>中</option><option value="高"${hVal==='高'?' selected':''}>高</option></select></td><td><input type="text" value="${s.op}" onchange="updateStep(${i},'op',this.value)"></td><td><button class="btn-del" onclick="removeStep(${i})">×</button></td>`;
-    tbody.appendChild(tr);});
-  const tt=steps.reduce((s,st)=>Math.max(s,st.time+(st.duration||0)),0);
+  const box=document.getElementById('stepEditor');box.innerHTML='';let cum=0;
+  steps.forEach((s,i)=>{
+    cum+=s.pour;const end=s.time+(s.duration||0);
+    const d=document.createElement('div');d.className='step-edit';
+    d.innerHTML=`
+      <div class="se-head">
+        <span class="se-no">STEP ${i+1}</span>
+        <span class="se-time">${fmt(s.time)} 〜 ${fmt(end)}</span>
+        <button class="se-del" onclick="delStep(${i})" aria-label="このステップを削除">🗑</button>
+      </div>
+      <textarea class="se-op" rows="2" placeholder="オペレーション（例：中心から螺旋で全体を濡らす）"
+        oninput="opHint(this)" onchange="updateStep(${i},'op',this.value)">${(s.op||'').replace(/</g,'&lt;')}</textarea>
+      <div class="se-hint">${[...(s.op||'')].length} / ${OP_MAX}</div>
+      <div class="se-grid">
+        <label>開始<input type="number" value="${s.time}" onchange="updateStep(${i},'time',this.value)"><span>秒</span></label>
+        <label>長さ<input type="number" value="${s.duration||0}" onchange="updateStep(${i},'duration',this.value)"><span>秒</span></label>
+        <label>注湯<input type="number" value="${s.pour}" onchange="updateStep(${i},'pour',this.value)"><span>g</span></label>
+      </div>
+      <div class="se-foot">
+        <span class="se-cum">累計 <b>${cum}g</b> まで</span>
+        <label class="se-h">高さ
+          <select onchange="updateStep(${i},'h',this.value)">
+            <option value=""${!s.h?' selected':''}>—</option>
+            <option value="低"${s.h==='低'?' selected':''}>低</option>
+            <option value="中"${s.h==='中'?' selected':''}>中</option>
+            <option value="高"${s.h==='高'?' selected':''}>高</option>
+          </select></label>
+      </div>`;
+    box.appendChild(d);
+  });
+  const tt=steps.reduce((a,st)=>Math.max(a,st.time+(st.duration||0)),0);
   document.getElementById('targetTime').value=tt>0?fmt(tt):'';
 }
-function updateStep(i,f,v){if(f==='time'||f==='pour'||f==='duration')v=parseInt(v)||0;steps[i][f]=v;renderTimeline();updateRatio();}
+function updateStep(i,f,v){
+  if(f==='time'||f==='pour'||f==='duration')v=parseInt(v)||0;
+  if(f==='op')v=normalizeOp(v);
+  steps[i][f]=v;renderTimeline();updateRatio();
+}
+function delStep(i){steps.splice(i,1);renderTimeline();}
+function opHint(el){
+  let a=[...el.value];
+  if(a.length>OP_MAX){el.value=a.slice(0,OP_MAX).join('');a=[...el.value];}
+  const n=a.length,h=el.parentElement.querySelector('.se-hint');
+  if(!h)return;
+  h.textContent=`${n} / ${OP_MAX}`+(n>=OP_MAX?'（上限）':n>14?'　抽出画面では小さく表示されます':'');
+  h.classList.toggle('over',n>=OP_MAX);
+}
 function addStep(){const l=steps[steps.length-1];steps.push({time:l?l.time+(l.duration||30):0,duration:30,pour:0,op:"新しいステップ",h:"中"});renderTimeline();}
 function removeStep(i){steps.splice(i,1);renderTimeline();}
-function autoSelectFilter(){const d=document.getElementById('dripper').value;const map={'V60 01':'HARIO V60ペーパー 白 1-2杯','V60 02':'CAFEC アバカ 円錐 2-4杯','V60 NEO 01':'HARIO V60ペーパー 白 1-2杯','V60 NEO 02':'CAFEC アバカ 円錐 2-4杯','V60 MUGEN':'CAFEC アバカ 円錐 2-4杯','Kalita 155':'カリタ ウェーブ 155','スイッチ':'CAFEC アバカ 円錐 2-4杯','ネルドリップ':'ネルフィルター'};document.getElementById('filter').value=map[d]||'CAFEC アバカ 円錐 2-4杯';}
+function autoSelectFilter(){const d=document.getElementById('dripper').value;const map={'V60 01':'HARIO V60ペーパー 白 1-2杯','V60 02':'CAFEC アバカ 円錐 2-4杯','V60 NEO 01':'HARIO V60ペーパー 白 1-2杯','V60 NEO 02':'CAFEC アバカ 円錐 2-4杯','V60 MUGEN':'CAFEC アバカ 円錐 2-4杯','Kalita 155':'カリタ ウェーブ 155','スイッチ':'CAFEC アバカ 円錐 2-4杯','ネルドリップ':'ネルフィルター','KONO 名門 MDK-21':'KONO 円すいペーパー MD-25'};document.getElementById('filter').value=map[d]||'CAFEC アバカ 円錐 2-4杯';}
 
 // Audio
-function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();}
+function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx;}
 function beep(f=880,d=.15){initAudio();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.frequency.value=f;g.gain.setValueAtTime(.3,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.01,audioCtx.currentTime+d);o.start();o.stop(audioCtx.currentTime+d);const fl=document.getElementById('beepFlash');fl.classList.add('flash');setTimeout(()=>fl.classList.remove('flash'),200);}
 function doubleBeep(){beep(880,.12);setTimeout(()=>beep(1100,.15),180);}
+// 音が出せない環境（iOSのサイレント等）でも分かるよう、合図では必ず画面を光らせる
+// ※ iOS Safari は Vibration API 非対応。振動は Android のみ効く
+function flashScreen(ms){const fl=document.getElementById('beepFlash');if(!fl)return;
+  fl.classList.add('flash');setTimeout(()=>fl.classList.remove('flash'),ms||220);}
+// 注湯=高い2音 / 待機=低い2音（聞き分けるため）
+function cueStep(st){const f=(st&&st.pour>0)?880:520;beep(f,.16);setTimeout(()=>beep(f*1.25,.16),150);
+  if(navigator.vibrate)navigator.vibrate([180,90,180]);flashScreen(320);}
+function cuePre(){beep(660,.09);flashScreen(140);}                                  // 終了3秒前の予告
+function cueGo(){beep(520,.12);setTimeout(()=>beep(1040,.30),130); // 0秒＝注ぎ始め
+  if(navigator.vibrate)navigator.vibrate([300,80,300]);flashScreen(500);}
+function cueEnd(){flashScreen(600);beep(660,.3);setTimeout(()=>beep(880,.3),400);setTimeout(()=>beep(1100,.5),800);
+  if(navigator.vibrate)navigator.vibrate([300,150,300,150,500]);}
 
 // Timer
-function startBrew(){
+// レシピタブの内容から抽出画面を組み立てる。タイマーが走っていれば何もしない。
+function prepareBrew(){
+  if(timerRunning||brewStartTime)return;   // 走行中は触らない
+  if(!steps.length)return;
   for(let i=0;i<steps.length;i++){if(!steps[i].duration||steps[i].duration<=0){steps[i].duration=(i<steps.length-1)?steps[i+1].time-steps[i].time:60;}}
   totalTime=steps.reduce((s,st)=>Math.max(s,st.time+st.duration),0);
   // Compute cumulative ml for each step
   let cum=0;steps.forEach(s=>{cum+=s.pour;s._cumMl=cum;});
-  lastBrewRecipe={bean:document.getElementById('beanName').value,roast:document.getElementById('roastLevel').value,weight:document.getElementById('beanWeight').value,water:document.getElementById('totalWater').value,ratio:document.getElementById('ratio').value,grind:document.getElementById('grindClicks').value,temp:document.getElementById('waterTemp').value,dripper:document.getElementById('dripper').value,filter:document.getElementById('filter').value,target_time:fmt(totalTime)};
+  lastBrewRecipe={bean:document.getElementById('beanName').value,roast:document.getElementById('roastLevel').value,weight:document.getElementById('beanWeight').value,water:document.getElementById('totalWater').value,ratio:document.getElementById('ratio').value,grind:document.getElementById('grindClicks').value,temp:document.getElementById('waterTemp').value,dripper:document.getElementById('dripper').value,filter:document.getElementById('filter').value,target_time:fmt(totalTime),
+    kettle:'',card_flavors:document.getElementById('cardFlavorSrc').value||''};
   document.getElementById('fbActualTime').placeholder=fmt(totalTime)+'（提案）';
   document.getElementById('fbActualTemp').placeholder=document.getElementById('waterTemp').value+'℃（提案）';
-  document.getElementById('editorView').classList.add('hidden');document.getElementById('loadedBanner').style.display='none';
+  document.getElementById('loadedBanner').style.display='none';
+  document.getElementById('brewEmpty').style.display='none';
   document.getElementById('timerView').classList.add('active');renderRecipeSummary();
-  document.getElementById('timerTotal').textContent=`/ ${fmt(totalTime)}`;renderStepCards();
-  elapsed=0;isPaused=false;timerRunning=false;lastNotifiedStep=-1;pausedDuration=0;pausedAt=null;
-  updateTimerDisplay();updateHero(-1);
-  document.getElementById('startBtn').style.display='';document.getElementById('pauseBtn').style.display='none';
+  document.getElementById('timerTotal').textContent=`/ ${fmt(totalTime)}`;
+  elapsed=0;isPaused=false;timerRunning=false;finished=false;lastStepIdx=-1;warnedAt=-1;
+  brewStartTime=null;pausedDuration=0;pausedAt=null;clearSession();
+  document.getElementById('startBtn').style.display='';
 }
-function beginTimer(){
-  brewStartTime=Date.now();pausedDuration=0;pausedAt=null;timerRunning=true;
-  initAudio();timerInterval=setInterval(tick,250);
-  document.getElementById('startBtn').style.display='none';document.getElementById('pauseBtn').style.display='';
-  if(navigator.wakeLock)navigator.wakeLock.request('screen').catch(()=>{});
-}
-function renderRecipeSummary(){const r=lastBrewRecipe;document.getElementById('recipeSummary').innerHTML=[{i:'☕',v:r.bean,l:'豆'},{i:'📎',v:r.dripper,l:'ドリッパー'},{i:'📄',v:r.filter||'-',l:'フィルター'},{i:'⚖️',v:r.ratio||'',l:'レシオ'},{i:'🫘',v:r.weight+'g',l:'豆量'},{i:'🔧',v:r.grind+'cl',l:'C2'},{i:'💧',v:r.water+'ml',l:'湯量'},{i:'🌡️',v:r.temp+'℃',l:'湯温'},{i:'⏱',v:r.target_time,l:'目標時間'}].map(x=>`<div class="item"><div class="icon">${x.i}</div><div class="val">${x.v}</div><div class="lbl">${x.l}</div></div>`).join('');}
-function renderStepCards(){let c=0;const circ=2*Math.PI*16;const tw=steps.reduce((a,s)=>a+s.pour,0)||1;const tt=totalTime||1;steps.forEach((s,i)=>{s._wStartPct=c/tw*100;c+=s.pour;s._wEndPct=c/tw*100;s._tStartPct=s.time/tt*100;s._tEndPct=(s.time+s.duration)/tt*100;});c=0;document.getElementById('stepCards').innerHTML=steps.map((s,i)=>{c+=s.pour;const pourLabel=s.pour>0?`${c}ml`:'—';const initTimePct=Math.round(s._tStartPct);return`<div class="step-card" id="step-${i}"><div class="step-header"><span class="step-num">STEP ${i+1}</span><span class="step-time">${fmt(s.time)}~${fmt(s.time+s.duration)}</span></div><div class="step-op">${s.op}</div><div class="step-water">${s.pour>0?`<span>${s.pour}ml / ${s.duration}秒</span><span class="flow-rate">${(s.pour/s.duration).toFixed(1)} ml/s</span>`:''}${s.h?`<span class="step-height" data-h="${s.h}">↕${s.h}</span>`:''}</div><div class="step-progress-row"><div class="step-ring"><svg viewBox="0 0 38 38"><circle class="step-ring-bg" cx="19" cy="19" r="16"/><circle class="step-ring-fg" id="ring-${i}" cx="19" cy="19" r="16" stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${(circ*(1-s._tStartPct/100)).toFixed(1)}"/></svg><div class="step-ring-text" id="ringTxt-${i}">${initTimePct}%</div></div><div class="step-prog-wrap"><div class="step-pour-label" id="pourLbl-${i}">${pourLabel}</div><div class="step-prog-bar-bg"><div class="step-prog-bar" id="bar-${i}"></div></div></div></div><div class="step-status" id="ss-${i}"></div></div>`;}).join('');}
-function tick(){if(isPaused)return;const prev=elapsed;elapsed=calcElapsed();if(elapsed===prev)return;
-  // Notify on step transitions
-  steps.forEach(s=>{if(s.time>prev&&s.time<=elapsed){doubleBeep();if(navigator.vibrate)navigator.vibrate([200,100,200]);}});
-  if(elapsed>=totalTime&&prev<totalTime){clearInterval(timerInterval);timerRunning=false;beep(660,.3);setTimeout(()=>beep(880,.3),400);setTimeout(()=>beep(1100,.5),800);if(navigator.vibrate)navigator.vibrate([300,150,300,150,500]);}
-  updateTimerDisplay();}
-function updateTimerDisplay(){document.getElementById('timerDisplay').textContent=fmt(elapsed);document.getElementById('progressBar').style.width=`${Math.min(100,elapsed/totalTime*100)}%`;const circ=2*Math.PI*16;let cs=-1;steps.forEach((s,i)=>{const cd=document.getElementById(`step-${i}`),st=document.getElementById(`ss-${i}`),bar=document.getElementById(`bar-${i}`),ring=document.getElementById(`ring-${i}`),ringTxt=document.getElementById(`ringTxt-${i}`),et=s.time+s.duration;let tPct=s._tStartPct||0;if(elapsed>=et){cd.className='step-card done';st.className='step-status done-text';st.textContent='✓';tPct=s._tEndPct||0;}else if(elapsed>=s.time){cd.className='step-card current';st.className='step-status active-text';st.textContent=`残り${et-elapsed}秒`;cs=i;const prog=(elapsed-s.time)/s.duration;tPct=(s._tStartPct||0)+(((s._tEndPct||0)-(s._tStartPct||0))*prog);}else{cd.className=i===cs+1?'step-card next':'step-card';st.textContent='';tPct=s._tStartPct||0;}if(bar){let stepProg=0;if(elapsed>=et)stepProg=100;else if(elapsed>=s.time)stepProg=Math.round((elapsed-s.time)/s.duration*100);bar.style.width=stepProg+'%';}if(ring)ring.setAttribute('stroke-dashoffset',(circ*(1-tPct/100)).toFixed(1));if(ringTxt)ringTxt.textContent=Math.round(tPct)+'%';});updateHero(cs);scheduleAutoScroll(cs);}
-function updateHero(cs){
-  const hero=document.getElementById('brewHero');
-  const lbl=document.getElementById('heroStepLabel'),op=document.getElementById('heroOp'),tgt=document.getElementById('heroTarget'),cd=document.getElementById('heroCountdown'),bw=document.getElementById('heroBarWrap'),bar=document.getElementById('heroBar'),meta=document.getElementById('heroMeta');
-  if(!timerRunning&&elapsed===0){hero.className='brew-hero waiting';lbl.textContent='準備完了';op.textContent='';tgt.innerHTML='<div class="hero-wait-msg">▶ スタートで開始</div>';cd.style.display='none';bw.style.display='none';meta.innerHTML='';return;}
-  if(elapsed>=totalTime){hero.className='brew-hero done';lbl.textContent='抽出完了';op.textContent='';tgt.innerHTML=`<div class="hero-ml" style="color:var(--success)">${fmt(totalTime)}</div>`;cd.style.display='none';bw.style.display='none';bar.style.width='100%';meta.innerHTML='';return;}
-  if(cs<0){hero.className='brew-hero waiting';lbl.textContent='待機中';op.textContent='';tgt.innerHTML='';cd.style.display='none';bw.style.display='none';meta.innerHTML='';return;}
-  const s=steps[cs],et=s.time+s.duration,remain=et-elapsed;
-  const stepProg=Math.round((elapsed-s.time)/s.duration*100);
-  hero.className='brew-hero';lbl.textContent=`STEP ${cs+1} / ${steps.length}`;op.textContent=s.op;
-  cd.style.display='';bw.style.display='';
-  cd.textContent=`残り ${remain}秒`;
-  bar.style.width=stepProg+'%';
-  if(s.pour>0){
-    const cumTarget=s._cumMl||0;
-    tgt.innerHTML=`<div class="hero-ml">${cumTarget}<span class="hero-ml-unit">ml</span></div><div class="hero-deadline"><span class="hero-at">@</span>${fmt(et)}</div>`;
-    const rate=(s.pour/s.duration).toFixed(1);
-    let metaH=`<span class="badge flow-badge">${rate} ml/s</span>`;
-    if(s.h)metaH+=`<span class="badge height-badge" data-h="${s.h}">↕ ${s.h}</span>`;
-    meta.innerHTML=metaH;
-  }else{
-    const nextIdx=cs+1<steps.length?cs+1:null;
-    const nextInfo=nextIdx!==null?`→ 次 ${fmt(steps[nextIdx].time)}`:'';
-    tgt.innerHTML=`<div class="hero-wait-msg" style="font-size:1.3rem;color:var(--text)">${s.op}</div>`;
-    cd.textContent=`残り ${remain}秒 ${nextInfo}`;
-    meta.innerHTML='';
+// レシピタブのボタンから：組み立てて抽出タブへ移動するだけ
+function startBrew(){prepareBrew();switchTab('brew');}
+function renderRecipeSummary(){const r=lastBrewRecipe;document.getElementById('recipeSummary').innerHTML=[{i:'☕',v:r.bean,l:'豆'},{i:'📎',v:r.dripper,l:'ドリッパー'},{i:'📄',v:r.filter||'-',l:'フィルター'},{i:'⚖️',v:r.ratio||'',l:'レシオ'},{i:'🫘',v:r.weight+'g',l:'豆量'},{i:'🔧',v:r.grind+'cl',l:'C2'},{i:'💧',v:r.water+'g',l:'湯量'},{i:'🌡️',v:r.temp+'℃',l:'湯温'},{i:'⏱',v:r.target_time,l:'目標時間'}].map(x=>`<div class="item"><div class="icon">${x.i}</div><div class="val">${x.v}</div><div class="lbl">${x.l}</div></div>`).join('');}
+function renderStepCards(){}
+function curIdx(e){let i=-1;steps.forEach((st,k)=>{if(e>=st.time&&e<st.time+st.duration)i=k;});
+  if(i<0&&e>=totalTime)i=steps.length-1; if(i<0&&steps.length)i=0; return i;}
+
+function tick(){
+  if(isPaused)return;
+  elapsed=calcElapsed();
+  const i=curIdx(elapsed);
+  if(i!==lastStepIdx){ if(lastStepIdx>=0)cueStep(steps[i]); lastStepIdx=i; warnedAt=-1; }
+  if(i>=0){
+    const rem=steps[i].time+steps[i].duration-elapsed;
+    if(rem<=3&&rem>0&&Math.ceil(rem)!==warnedAt){warnedAt=Math.ceil(rem);cuePre();}
   }
+  if(elapsed>=totalTime&&!finished){
+    finished=true;clearInterval(timerInterval);timerRunning=false;cueEnd();clearSession();
+    const _h=document.getElementById('hud');
+    _h.classList.add('done','finish-flash');
+    setTimeout(()=>_h.classList.remove('finish-flash'),6000);
+  }
+  drawHUD();
+  if(Date.now()-lastSaved>2000){saveSession();lastSaved=Date.now();}
 }
+
+function drawHUD(){
+  const H=id=>document.getElementById(id), hud=H('hud');
+  if(!steps.length)return;
+  const e=Math.min(elapsed,totalTime), i=Math.max(0,curIdx(e)), st=steps[i];
+  const into=e-st.time, rem=Math.max(0,st.time+st.duration-e), pouring=st.pour>0;
+  H('hudNo').textContent=`STEP ${i+1}/${steps.length}`;
+  H('hudPrev').disabled=(i<=0); H('hudNext').disabled=(i>=steps.length-1&&!finished);
+  H('hudEla').textContent=`${fmt(e)} / ${fmt(totalTime)}`;
+  const opEl=H('hudOp'),opTxt=st.op||'',opN=[...opTxt].length;
+  opEl.textContent=opTxt;
+  opEl.classList.remove('op-m','op-s','op-xs');
+  if(opN>22)      opEl.classList.add('op-xs');
+  else if(opN>14) opEl.classList.add('op-s');
+  else if(opN>8)  opEl.classList.add('op-m');
+  hud.classList.toggle('longop',opN>14);
+  const nx=steps[i+1];
+  H('hudNext').innerHTML= nx?`<b>次：</b>${nx.op||''}`:'<b>この後：</b>落とし切って完成';
+  const lastCum=steps.reduce((a,x)=>a+x.pour,0);
+  H('hudGoal').textContent= pouring ? (st._cumMl||0) : lastCum;
+  H('hudSub').textContent= pouring
+    ? `このステップ +${st.pour}g / ${st.duration}秒`
+    : `注がずに待つ / ${st.duration}秒`;
+  H('hudRem').textContent=Math.ceil(rem);
+  // 水位はステップごとに 0→100%（注湯）／100→0%（待機・落ち切り）
+  const prog=Math.max(0,Math.min(1,st.duration?into/st.duration:1));
+  H('hudFlood').style.height=(pouring?prog:(1-prog))*100+'%';
+  hud.classList.toggle('wait',!pouring);
+  hud.classList.toggle('warn',rem<=3&&rem>0&&!finished);
+  // 旧・簡易表示も維持
+  const td=H('timerDisplay'); if(td)td.textContent=fmt(e);
+  const pb=H('progressBar'); if(pb)pb.style.width=Math.min(100,e/totalTime*100)+'%';
+}
+
+function openHud(){document.getElementById('hud').classList.add('on');}
+// 手動でステップを移動する。時計そのものをそのステップの開始時刻へ動かすので、
+// 表示・水位・音の判定がすべて一致したまま進む／戻る。
+function jumpStep(d){
+  if(!steps.length||!brewStartTime)return;
+  const i=curIdx(calcElapsed());
+  const j=Math.max(0,Math.min(steps.length-1,i+d));
+  if(j===i&&!finished)return;
+  const target=steps[j].time;
+  const now=isPaused?pausedAt:Date.now();
+  brewStartTime=now-target*1000-pausedDuration;
+  elapsed=target; lastStepIdx=j; warnedAt=-1;
+  if(finished){                       // 完了後に戻したら再開する
+    finished=false; timerRunning=true;
+    const h=document.getElementById('hud'); h.classList.remove('done','finish-flash');
+    clearInterval(timerInterval); timerInterval=setInterval(tick,250);
+  }
+  flashScreen(160); drawHUD(); saveSession();
+}
+function closeHud(){document.getElementById('hud').classList.remove('on');}
+
+// ===== カウントダウン付き開始 =====
+function beginTimer(){
+  if(!steps.length)return;
+  initAudio();                       // 押した瞬間に音声をアンロック
+  openHud();
+  const cd=document.getElementById('hudCd'),num=document.getElementById('hudCdNum');
+  cd.classList.add('on');
+  let n=COUNTDOWN_SEC;num.textContent=n;beep(440,.10);
+  cdTimer=setInterval(()=>{
+    if(--n<=0){clearInterval(cdTimer);cdTimer=null;cd.classList.remove('on');cueGo();actuallyStart();return;}
+    num.textContent=n;beep(440,.10);
+  },1000);
+}
+function abortCountdown(){
+  if(cdTimer){clearInterval(cdTimer);cdTimer=null;}
+  document.getElementById('hudCd').classList.remove('on');
+  closeHud();
+}
+function actuallyStart(){
+  brewStartTime=Date.now();pausedDuration=0;pausedAt=null;isPaused=false;
+  timerRunning=true;finished=false;lastStepIdx=-1;warnedAt=-1;
+  document.getElementById('hud').classList.remove('done','paused');
+  document.getElementById('startBtn').style.display='none';
+  clearInterval(timerInterval);timerInterval=setInterval(tick,250);
+  requestWakeLock();saveSession();tick();
+}
+
 function togglePause(){
+  if(!timerRunning)return;
   if(!isPaused){pausedAt=Date.now();isPaused=true;}
-  else{pausedDuration+=Date.now()-pausedAt;pausedAt=null;isPaused=false;}
-  document.getElementById('pauseBtn').textContent=isPaused?'▶ 再開':'⏸ 一時停止';document.getElementById('pauseBtn').style.background=isPaused?'var(--success)':'';
+  else{pausedDuration+=Date.now()-pausedAt;pausedAt=null;isPaused=false;lastStepIdx=curIdx(calcElapsed());}
+  document.getElementById('hud').classList.toggle('paused',isPaused);
+  saveSession();
 }
-function stopBrew(){clearInterval(timerInterval);timerRunning=false;document.getElementById('timerView').classList.remove('active');document.getElementById('editorView').classList.remove('hidden');if(urlLoaded)document.getElementById('loadedBanner').style.display='block';}
+
+function stopBrew(){
+  clearInterval(timerInterval);if(cdTimer){clearInterval(cdTimer);cdTimer=null;}
+  timerRunning=false;isPaused=false;finished=false;brewStartTime=null;
+  clearSession();releaseWakeLock();
+  const hud=document.getElementById('hud');
+  hud.classList.remove('on','done','paused','warn','wait');
+  document.getElementById('hudCd').classList.remove('on');
+  document.getElementById('startBtn').style.display='';
+  switchTab('recipe');
+}
+
+// ===== 画面を離れても消えないように =====
+function saveSession(){
+  if(!brewStartTime)return;
+  try{localStorage.setItem(SESSION_KEY,JSON.stringify({
+    steps,totalTime,lastBrewRecipe,brewStartTime,pausedDuration,pausedAt,isPaused
+  }));}catch(e){}
+}
+function clearSession(){try{localStorage.removeItem(SESSION_KEY);}catch(e){}}
+function restoreSession(){
+  let d=null;try{d=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');}catch(e){}
+  if(!d||!d.steps||!d.steps.length||!d.brewStartTime)return false;
+  const age=(Date.now()-d.brewStartTime)/1000;
+  if(age>(d.totalTime||0)+1800){clearSession();return false;}   // 抽出後30分以上たっていたら破棄
+  steps=d.steps;totalTime=d.totalTime;lastBrewRecipe=d.lastBrewRecipe;
+  brewStartTime=d.brewStartTime;pausedDuration=d.pausedDuration||0;
+  pausedAt=d.pausedAt||null;isPaused=!!d.isPaused;
+  document.getElementById('brewEmpty').style.display='none';
+  document.getElementById('timerView').classList.add('active');
+  if(lastBrewRecipe){renderRecipeSummary();
+    const tt=document.getElementById('timerTotal');if(tt)tt.textContent=`/ ${fmt(totalTime)}`;}
+  elapsed=calcElapsed();
+  lastStepIdx=curIdx(elapsed);warnedAt=-1;          // 復帰時に飛ばした音を鳴らさない
+  finished=elapsed>=totalTime;timerRunning=!finished;
+  document.getElementById('startBtn').style.display='none';
+  document.getElementById('hud').classList.toggle('paused',isPaused);
+  switchTab('brew');openHud();drawHUD();
+  if(!finished){clearInterval(timerInterval);timerInterval=setInterval(tick,250);requestWakeLock();}
+  return true;
+}
+
+// ===== 画面を点けたまま／復帰時に取り直す =====
+async function requestWakeLock(){
+  try{ if('wakeLock' in navigator){ wakeLockRef=await navigator.wakeLock.request('screen'); } }catch(e){}
+}
+function releaseWakeLock(){ try{ if(wakeLockRef){wakeLockRef.release();wakeLockRef=null;} }catch(e){} }
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState!=='visible')return;
+  if(!timerRunning||!brewStartTime)return;
+  elapsed=calcElapsed();
+  lastStepIdx=curIdx(elapsed);warnedAt=-1;          // 戻った瞬間に音が一斉に鳴るのを防ぐ
+  requestWakeLock();drawHUD();
+});
+window.addEventListener('pagehide',saveSession);
+
 function fmt(s){return`${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;}
 
 // Sensory
-function renderSensoryRatings(){document.getElementById('sensoryRatings').innerHTML=sensoryItems.map((item,idx)=>`<div class="cva-item"><div class="cva-header"><span class="cva-label">${item.label}</span><div class="cva-pref"><button class="cva-pref-btn" data-pref="${idx}" data-pv="good" onclick="setPref(${idx},'good')" title="心地よい">😊</button><button class="cva-pref-btn" data-pref="${idx}" data-pv="ok" onclick="setPref(${idx},'ok')" title="普通">😐</button><button class="cva-pref-btn" data-pref="${idx}" data-pv="bad" onclick="setPref(${idx},'bad')" title="不快">😞</button></div></div><div class="cva-slider-row"><span class="lo">${item.lo}</span><input type="range" class="cva-slider" id="cva-${idx}" min="0" max="10" value="5" oninput="document.getElementById('cvaV-${idx}').textContent=this.value"><span class="cva-val" id="cvaV-${idx}">5</span><span class="hi">${item.hi}</span></div><div class="cva-comment"><input type="text" id="cvaC-${idx}" placeholder="メモ（任意）"></div></div>`).join('');}
+function renderSensoryRatings(){document.getElementById('sensoryRatings').innerHTML=sensoryItems.map((item,idx)=>`<div class="cva-item"><div class="cva-header"><span class="cva-label">${item.label}</span><div class="cva-pref"><button class="cva-pref-btn" data-pref="${idx}" data-pv="good" onclick="setPref(${idx},'good')" title="心地よい">😊</button><button class="cva-pref-btn" data-pref="${idx}" data-pv="ok" onclick="setPref(${idx},'ok')" title="普通">😐</button><button class="cva-pref-btn" data-pref="${idx}" data-pv="bad" onclick="setPref(${idx},'bad')" title="不快">😞</button></div></div><div class="cva-slider-row"><span class="lo">${item.lo}</span><input type="range" class="cva-slider" id="cva-${idx}" min="0" max="10" value="5" data-touched="0" oninput="this.dataset.touched='1';document.getElementById('cvaV-${idx}').textContent=this.value"><span class="cva-val" id="cvaV-${idx}">—</span><span class="hi">${item.hi}</span></div><div class="cva-comment"><input type="text" id="cvaC-${idx}" placeholder="メモ（任意）"></div></div>`).join('');}
 function setPref(i,v){document.querySelectorAll(`[data-pref="${i}"]`).forEach(b=>{b.classList.remove('sel-good','sel-ok','sel-bad');if(b.dataset.pv===v)b.classList.add('sel-'+v);});}
-function renderFlavorTags(){let h='';Object.entries(flavorCategories).forEach(([cat,items])=>{h+=`<div class="flavor-cat">${cat}</div>`;h+=items.map(f=>`<button class="flavor-tag" onclick="this.classList.toggle('selected')">${f}</button>`).join('');});document.getElementById('flavorTags').innerHTML=h;document.getElementById('textureTags').innerHTML=textureOptions.map(t=>`<button class="flavor-tag" onclick="this.classList.toggle('selected')">${t}</button>`).join('');}
-const fbPhotos={bed:null,liquid:null};const fbPhotoTimings={bed:'',liquid:''};
+function mkTag(t,cat,kind){const b=document.createElement('button');b.type='button';b.className='flavor-tag';
+  b.textContent=typeof t==='string'?t:t.ja;b.dataset.en=(typeof t==='string'?'':t.en)||'';b.dataset.cat=cat;b.dataset.kind=kind;
+  b.onclick=()=>b.classList.toggle('selected');return b;}
+function acc(box,key,c,kind){
+  const w=document.createElement('div');w.className='fcat';
+  const h=document.createElement('button');h.type='button';h.className='fcat-head';
+  h.innerHTML=`<span>${c.emoji||''} ${c.ja}</span><span class="fcat-en">${c.en}</span>`;
+  h.onclick=()=>w.classList.toggle('open');
+  const b=document.createElement('div');b.className='fcat-body';
+  if(c.note){const n=document.createElement('div');n.className='fcat-note';n.textContent=c.note;b.appendChild(n);}
+  const add=(tags,label)=>{if(label){const g=document.createElement('div');g.className='fgrp';g.textContent=label;b.appendChild(g);}
+    const r=document.createElement('div');r.className='flavor-tags';tags.forEach(t=>r.appendChild(mkTag(t,c.ja,kind)));b.appendChild(r);};
+  if(c.groups)c.groups.forEach(g=>add(g.tags,g.ja)); else add(c.tags,null);
+  w.appendChild(h);w.appendChild(b);box.appendChild(w);
+}
+function renderFlavorTags(){
+  const fb=document.getElementById('flavorTags');fb.innerHTML='';
+  Object.entries(flavorCategories).forEach(([k,c])=>acc(fb,k,c,'flavor'));
+  const mt=document.getElementById('mainTastes');
+  if(mt){mt.innerHTML='';const r=document.createElement('div');r.className='flavor-tags';
+    mainTastes.forEach(t=>r.appendChild(mkTag(t,'基本の味','taste')));mt.appendChild(r);}
+  const tb=document.getElementById('textureTags');tb.innerHTML='';
+  Object.entries(textureCategories).forEach(([k,c])=>acc(tb,k,c,'texture'));
+}
 function calcPhotoTiming(file){
   if(!brewStartTime)return'';
   const now=Date.now();
@@ -621,8 +1214,53 @@ function calcPhotoTiming(file){
 function previewPhoto(input,id){const p=document.getElementById(id);if(input.files&&input.files[0]){const key=id.includes('bed')?'bed':'liquid';fbPhotos[key]=input.files[0];const r=new FileReader();r.onload=e=>{p.innerHTML=`<img src="${e.target.result}">`;};r.readAsDataURL(input.files[0]);const timing=calcPhotoTiming(input.files[0]);fbPhotoTimings[key]=timing;const autoEl=document.getElementById(key==='bed'?'bedTimingAuto':'liqTimingAuto');autoEl.textContent='⏱ '+timing;autoEl.style.display='block';}}
 
 // Feedback
-function gatherFeedback(){const se={};sensoryItems.forEach((item,i)=>{const intensity=parseInt(document.getElementById(`cva-${i}`).value);const prefBtn=document.querySelector(`[data-pref="${i}"].sel-good,[data-pref="${i}"].sel-ok,[data-pref="${i}"].sel-bad`);const pref=prefBtn?prefBtn.dataset.pv:'';const comment=document.getElementById(`cvaC-${i}`)?.value||'';se[item.key]={label:item.label,intensity,pref,comment};});const fl=[...document.getElementById('flavorTags').querySelectorAll('.flavor-tag.selected')].map(t=>t.textContent);const o=document.getElementById('fbFlavorOther').value;if(o)fl.push(o);const tx=[...document.getElementById('textureTags').querySelectorAll('.flavor-tag.selected')].map(t=>t.textContent);return{date:new Date().toISOString().split('T')[0],time:new Date().toTimeString().slice(0,5),recipe:lastBrewRecipe||{bean:document.getElementById('beanName').value},actual:{time:document.getElementById('fbActualTime').value,temp:document.getElementById('fbActualTemp').value,notes:document.getElementById('fbNotes').value},photos:{bed:!!fbPhotos.bed,bedTiming:fbPhotoTimings.bed||'',liquid:!!fbPhotos.liquid,liqTiming:fbPhotoTimings.liquid||''},sensory:se,overall:parseInt(document.getElementById('fbOverall').value),overallMemo:document.getElementById('fbOverallMemo').value||'',flavors:fl,textures:tx,next_request:document.getElementById('fbNextRequest').value,challenge:document.getElementById('fbChallenge').value==='yes'};}
-function buildFeedbackText(){const fb=gatherFeedback();const prefMap={good:'😊',ok:'😐',bad:'😞','':''};let t=`☕ 抽出フィードバック\n日時: ${fb.date} ${fb.time}\n`;if(fb.recipe)t+=`豆: ${fb.recipe.bean||''} / ${fb.recipe.weight||''}g / ${fb.recipe.water||''}ml / C2 ${fb.recipe.grind||''}cl / ${fb.recipe.temp||''}℃ / ${fb.recipe.dripper||''} / ${fb.recipe.filter||''}\n`;t+=`\n【操作】抽出時間:${fb.actual.time} 湯温:${fb.actual.temp}\n${fb.actual.notes}\n【写真】粉床:${fb.photos.bed?'添付あり('+fb.photos.bedTiming+')':'なし'} / 抽出液:${fb.photos.liquid?'添付あり('+fb.photos.liqTiming+')':'なし'}（Claudeが画像判定）\n\n【官能評価（CVA）】強さ/10 + 好み\n`;sensoryItems.forEach(item=>{const s=fb.sensory[item.key];if(s)t+=`${s.label}: ${s.intensity}/10 ${prefMap[s.pref]||''} ${s.comment?'('+s.comment+')':''}\n`;});t+=`総合:${fb.overall}/10${fb.overallMemo?' ('+fb.overallMemo+')':''}\n【フレーバー】${fb.flavors.join(',')}\n【テクスチャー】${fb.textures.join(',')}\n【次回】${fb.next_request}`;if(fb.challenge)t+='\n→チャレンジしたい！';return t;}
+let selAim=null,selFoam=null,photoTimes={bed:null,liq:null};
+function setAim(b){document.querySelectorAll('.aim-btn').forEach(x=>x.classList.remove('sel'));
+  b.classList.add('sel');selAim=b.dataset.aim;}
+function setFoam(b){document.querySelectorAll('.foam-btn').forEach(x=>x.classList.remove('sel'));
+  b.classList.add('sel');selFoam=parseInt(b.dataset.foam);}
+function markPhoto(which){
+  const t=(typeof elapsed==='number'&&brewStartTime)?fmt(elapsed):'—';
+  photoTimes[which]=t;
+  document.getElementById(which==='bed'?'bedTimeLbl':'liqTimeLbl').textContent=t;
+}
+// カードのフレーバーを照合する
+function renderCardFlavors(){
+  const raw=(document.getElementById('cardFlavorSrc')||{}).value||'';
+  const list=raw.split(/[,、\/]/).map(x=>x.trim()).filter(Boolean);
+  const el=document.getElementById('cardFlavors');if(!el)return;
+  if(!list.length){el.innerHTML='<div style="color:var(--muted);font-size:.72rem">レシピタブの「カードのフレーバー」に書くと、ここで照合できます</div>';return;}
+  el.innerHTML=list.map((n,i)=>`<div class="card-flavor-row"><span class="cf-name">${n}</span>
+    <span class="cf-btns"><button class="cf-b" data-i="${i}" data-v="感じた" onclick="setCF(this)">感じた</button>
+    <button class="cf-b" data-i="${i}" data-v="感じない" onclick="setCF(this)">感じない</button>
+    <button class="cf-b" data-i="${i}" data-v="わからない" onclick="setCF(this)">？</button></span></div>`).join('');
+}
+function setCF(b){document.querySelectorAll(`.cf-b[data-i="${b.dataset.i}"]`).forEach(x=>x.classList.remove('sel'));b.classList.add('sel');}
+function gatherCardFlavors(){
+  const rows=[...document.querySelectorAll('.card-flavor-row')];
+  return rows.map(r=>({name:r.querySelector('.cf-name').textContent,
+    felt:(r.querySelector('.cf-b.sel')||{}).textContent||'未記入'})).filter(x=>x.felt!=='未記入');
+}
+function gatherFeedback(){const se={};sensoryItems.forEach((item,i)=>{const _sl=document.getElementById(`cva-${i}`);const intensity=_sl.dataset.touched==='1'?parseInt(_sl.value):null;const prefBtn=document.querySelector(`[data-pref="${i}"].sel-good,[data-pref="${i}"].sel-ok,[data-pref="${i}"].sel-bad`);const pref=prefBtn?prefBtn.dataset.pv:'';const comment=document.getElementById(`cvaC-${i}`)?.value||'';se[item.key]={label:item.label,intensity,pref,comment};});const pick=k=>[...document.querySelectorAll(`.flavor-tag.selected[data-kind="${k}"]`)]
+    .map(t=>({ja:t.textContent,en:t.dataset.en||'',cat:t.dataset.cat||''}));
+  const flObj=pick('flavor'),tasteObj=pick('taste'),txObj=pick('texture');
+  const fl=flObj.map(x=>x.ja);
+  const flavorCats=[...new Set(flObj.map(x=>x.cat))];const o=document.getElementById('fbFlavorOther').value;if(o)fl.push(o);const tx=txObj.map(x=>x.ja);const txo=document.getElementById('fbTextureOther').value;if(txo)tx.push(txo);return{date:new Date().toISOString().split('T')[0],time:new Date().toTimeString().slice(0,5),recipe:lastBrewRecipe||{bean:document.getElementById('beanName').value},actual:{time:document.getElementById('fbActualTime').value,temp:document.getElementById('fbActualTemp').value,notes:document.getElementById('fbNotes').value},photos:{bed:!!fbPhotos.bed,bedTiming:fbPhotoTimings.bed||'',liquid:!!fbPhotos.liquid,liqTiming:fbPhotoTimings.liquid||''},sensory:se,overall:document.getElementById('fbOverall').dataset.touched==='1'?parseInt(document.getElementById('fbOverall').value):null,
+    aim:selAim,aim_memo:document.getElementById('fbAimMemo').value||'',
+    foam_white_level:selFoam,
+    kettle:document.getElementById('fbKettle').value||'',
+    beverage_weight_g:parseFloat(document.getElementById('fbBeverage').value)||null,
+    photo_times:{bed:photoTimes.bed,liquid:photoTimes.liq},
+    card_flavors:gatherCardFlavors(),overallMemo:document.getElementById('fbOverallMemo').value||'',flavors:fl,flavor_categories:flavorCats,main_tastes:tasteObj.map(x=>x.ja),textures:tx,next_request:document.getElementById('fbNextRequest').value,challenge:document.getElementById('fbChallenge').value==='yes'};}
+function buildFeedbackText(){const fb=gatherFeedback();const prefMap={good:'😊',ok:'😐',bad:'😞','':''};let t=`☕ 抽出フィードバック\n日時: ${fb.date} ${fb.time}\n`;if(fb.recipe)t+=`豆: ${fb.recipe.bean||''} / ${fb.recipe.weight||''}g / ${fb.recipe.water||''}g / C2 ${fb.recipe.grind||''}cl / ${fb.recipe.temp||''}℃ / ${fb.recipe.dripper||''} / ${fb.recipe.filter||''}\n`;t+=`\n【🎯狙い】${fb.aim||'未記入'}${fb.aim_memo?' — '+fb.aim_memo:''}\n`;
+  t+=`【操作】抽出時間:${fb.actual.time} 湯温:${fb.actual.temp} ケトル:${fb.kettle||'未記入'}\n${fb.actual.notes}\n`;
+  t+=`【実測】抽出液:${fb.beverage_weight_g!=null?fb.beverage_weight_g+'g':'未計測'}\n`;
+  t+=`【白い泡】${fb.foam_white_level!=null?'Lv'+fb.foam_white_level:'未記入'}\n`;
+  t+=`【写真の時刻】粉床:${fb.photo_times.bed||'—'} / 抽出液:${fb.photo_times.liquid||'—'}\n`;
+  if(fb.card_flavors&&fb.card_flavors.length)t+=`【カード照合】${fb.card_flavors.map(c=>c.name+':'+c.felt).join(' / ')}\n`;
+  const _se=sensoryItems.map(item=>fb.sensory[item.key]).filter(x=>x&&x.intensity!=null);
+  if(_se.length){t+=`\n【官能評価（CVA）】強さ/10 + 好み\n`;_se.forEach(s=>{t+=`${s.label}: ${s.intensity}/10 ${prefMap[s.pref]||''} ${s.comment?'('+s.comment+')':''}\n`;});}
+  t+=`総合:${fb.overall!=null?fb.overall+'/10':'未記入'}${fb.overallMemo?' ('+fb.overallMemo+')':''}\n【基本の味】${(fb.main_tastes||[]).join(',')||'—'}\n【フレーバー】${fb.flavors.join(',')}${fb.flavor_categories&&fb.flavor_categories.length?' （分類: '+fb.flavor_categories.join('/')+'）':''}\n【テクスチャー】${fb.textures.join(',')}\n【次回】${fb.next_request}`;if(fb.challenge)t+='\n→チャレンジしたい！';return t;}
 async function exportFeedback(){
   const t=buildFeedbackText();
   const photos=[];
@@ -640,7 +1278,7 @@ async function exportFeedback(){
 function saveFeedbackLocal(){const fb=gatherFeedback();let logs=[];try{logs=JSON.parse(localStorage.getItem('brewLogs')||'[]');}catch(e){}fb.id=logs.length+1;logs.push(fb);try{localStorage.setItem('brewLogs',JSON.stringify(logs));}catch(e){}alert('保存しました！');loadLogs();}
 
 // Log
-function loadLogs(){let logs=[];try{logs=JSON.parse(localStorage.getItem('brewLogs')||'[]');}catch(e){}const el=document.getElementById('logEntries');if(!logs.length){el.innerHTML='<div class="log-empty">まだ記録がありません</div>';return;}el.innerHTML=logs.slice().reverse().map(l=>{const fl=(l.flavors||[]).map(f=>`<span class="flavor-tag" style="cursor:default;font-size:.68rem;padding:2px 7px">${f}</span>`).join('');return`<div class="log-entry"><div class="log-header"><span class="log-date">${l.date} ${l.time}</span><span class="log-score">${l.overall||'?'}/10</span></div><div class="log-bean">${l.recipe?.bean||''}</div><div class="log-params">${l.recipe?.weight||''}g/${l.recipe?.water||''}ml/C2 ${l.recipe?.grind||''}/${l.recipe?.temp||''}℃/${l.recipe?.dripper||''}${l.recipe?.filter?' / '+l.recipe.filter:''}</div>${fl?`<div class="log-flavors">${fl}</div>`:''}</div>`;}).join('');}
+function loadLogs(){const _le=document.getElementById('logEntries');if(!_le)return;let logs=[];try{logs=JSON.parse(localStorage.getItem('brewLogs')||'[]');}catch(e){}const el=document.getElementById('logEntries');if(!logs.length){el.innerHTML='<div class="log-empty">まだ記録がありません</div>';return;}el.innerHTML=logs.slice().reverse().map(l=>{const fl=(l.flavors||[]).map(f=>`<span class="flavor-tag" style="cursor:default;font-size:.68rem;padding:2px 7px">${f}</span>`).join('');return`<div class="log-entry"><div class="log-header"><span class="log-date">${l.date} ${l.time}</span><span class="log-score">${l.overall||'?'}/10</span></div><div class="log-bean">${l.recipe?.bean||''}</div><div class="log-params">${l.recipe?.weight||''}g/${l.recipe?.water||''}ml/C2 ${l.recipe?.grind||''}/${l.recipe?.temp||''}℃/${l.recipe?.dripper||''}${l.recipe?.filter?' / '+l.recipe.filter:''}</div>${fl?`<div class="log-flavors">${fl}</div>`:''}</div>`;}).join('');}
 function exportAllLogs(){let l=[];try{l=JSON.parse(localStorage.getItem('brewLogs')||'[]');}catch(e){}const b=new Blob([JSON.stringify({brew_log:l},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='brew-log.json';a.click();}
 function clearLogs(){if(confirm('全記録を削除？')){try{localStorage.removeItem('brewLogs');}catch(e){}loadLogs();}}
 
@@ -752,14 +1390,50 @@ function getCurrentRecipeURL(){
   };
   return generateRecipeURL(recipe,steps);
 }
+// QRの限界：ver40/M のバイトモード上限は2,331バイト。
+// さらに画面サイズの制約があり、1モジュール2px未満は実用上スキャンできない。
+const QR_BYTES_MAX=2331, QR_PRACTICAL=1500;
 async function showQR(){
-  try{await loadQRLib();}catch(e){alert('QRライブラリの読み込みに失敗しました');return;}
   const url=getCurrentRecipeURL();
-  const bean=document.getElementById('beanName').value;
-  document.getElementById('qrBeanLabel').textContent=bean;
-  const canvas=document.getElementById('qrCanvas');
-  new QRious({element:canvas,value:url,size:220,level:'M',background:'#ffffff',foreground:'#1a1410'});
+  const bytes=new TextEncoder().encode(url).length;
+  const note=document.getElementById('qrNote');
+  document.getElementById('qrBeanLabel').textContent=document.getElementById('beanName').value;
   document.getElementById('qrOverlay').classList.add('show');
+  const canvas=document.getElementById('qrCanvas');
+  const ctx=canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  if(bytes>QR_BYTES_MAX){
+    note.className='qr-note err';
+    note.textContent=`レシピが長すぎてQRにできません（${bytes}バイト / 上限${QR_BYTES_MAX}）。`
+      +`ステップ数を減らすか、下の「URLをコピー」を使ってください。`;
+    return;
+  }
+  try{ await loadQRLib(); }
+  catch(e){
+    note.className='qr-note err';
+    note.textContent='QRライブラリを読み込めませんでした（オフラインの可能性）。下の「URLをコピー」を使ってください。';
+    return;
+  }
+  // データ量に応じてキャンバスを大きくする（密度不足でスキャンできないのを防ぐ）
+  const size = bytes>1200 ? 340 : bytes>700 ? 280 : 220;
+  try{
+    new QRious({element:canvas,value:url,size,level:'M',background:'#ffffff',foreground:'#14532D'});
+  }catch(e){
+    note.className='qr-note err';
+    note.textContent='QRの生成に失敗しました。下の「URLをコピー」を使ってください。';
+    return;
+  }
+  note.className='qr-note'+(bytes>QR_PRACTICAL?' warn':'');
+  note.textContent = bytes>QR_PRACTICAL
+    ? `データが多め（${bytes}バイト）。読み取りにくければ「URLをコピー」を使ってください。`
+    : `${bytes}バイト`;
+}
+async function copyRecipeURL(){
+  const url=getCurrentRecipeURL();
+  try{ await navigator.clipboard.writeText(url); }
+  catch(e){ const t=document.createElement('textarea'); t.value=url; document.body.appendChild(t);
+            t.select(); document.execCommand('copy'); t.remove(); }
+  const n=document.getElementById('qrNote'); n.className='qr-note ok'; n.textContent='URLをコピーしました';
 }
 function closeQR(){document.getElementById('qrOverlay').classList.remove('show');}
 
