@@ -500,10 +500,10 @@
   <button class="hud-tap" id="hudTap" aria-label="一時停止・再開"></button>
   <div class="hud-badge">❚❚ 一時停止</div>
   <div class="hud-top">
-    <button class="hud-nav" id="hudPrev" onclick="jumpStep(-1)" aria-label="前のステップへ">◀</button>
+    <button class="hud-nav" id="hudPrevBtn" onclick="jumpStep(-1)" aria-label="前のステップへ">◀</button>
     <span class="no" id="hudNo">STEP 1/1</span>
     <span id="hudEla">0:00 / 0:00</span>
-    <button class="hud-nav" id="hudNext" onclick="jumpStep(1)" aria-label="次のステップへ">▶</button>
+    <button class="hud-nav" id="hudNextBtn" onclick="jumpStep(1)" aria-label="次のステップへ">▶</button>
   </div>
   <div class="hud-core">
     <div class="hud-op" id="hudOp"></div>
@@ -1030,7 +1030,7 @@ function drawHUD(){
   const e=Math.min(elapsed,totalTime), i=Math.max(0,curIdx(e)), st=steps[i];
   const into=e-st.time, rem=Math.max(0,st.time+st.duration-e), pouring=st.pour>0;
   H('hudNo').textContent=`STEP ${i+1}/${steps.length}`;
-  H('hudPrev').disabled=(i<=0); H('hudNext').disabled=(i>=steps.length-1&&!finished);
+  H('hudPrevBtn').disabled=(i<=0); H('hudNextBtn').disabled=(i>=steps.length-1&&!finished);
   H('hudEla').textContent=`${fmt(e)} / ${fmt(totalTime)}`;
   const opEl=H('hudOp'),opTxt=st.op||'',opN=[...opTxt].length;
   opEl.textContent=opTxt;
