@@ -481,7 +481,7 @@
     .hud.finish-flash{animation:none;outline:8px solid var(--coral);outline-offset:-8px}}
 
   /* ステップ手送り（濡れた手でも押せる大きさ／HUDのタップ領域より前面） */
-  .hud-nav{position:relative;z-index:4;flex:0 0 auto;width:56px;height:56px;
+  .hud-nav{position:relative;z-index:2;flex:0 0 auto;width:56px;height:56px;
     background:transparent;border:0;color:var(--hud-sub);font-size:22px;cursor:pointer;
     border-radius:999px;font-family:inherit;line-height:1}
   .hud-nav:active{background:rgba(20,83,45,.10);color:var(--hud-ink)}
@@ -497,8 +497,6 @@
 <!-- ==================== 注湯HUD ==================== -->
 <div class="hud" id="hud">
   <div class="hud-flood" id="hudFlood"></div>
-  <button class="hud-tap" id="hudTap" aria-label="一時停止・再開"></button>
-  <div class="hud-badge">❚❚ 一時停止</div>
   <div class="hud-top">
     <button class="hud-nav" id="hudPrevBtn" onclick="jumpStep(-1)" aria-label="前のステップへ">◀</button>
     <span class="no" id="hudNo">STEP 1/1</span>
@@ -868,7 +866,6 @@ function loadFromURL(data){
 // ===== INIT =====
 function init(){
   renderSensoryRatings();renderFlavorTags();
-  document.getElementById('hudTap').addEventListener('click',togglePause);
   if(!restoreSession())prepareBrew();
   document.getElementById('beanWeight').addEventListener('input',updateRatio);
   document.getElementById('totalWater').addEventListener('input',updateRatio);
