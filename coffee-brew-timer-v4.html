@@ -920,8 +920,8 @@ function renderTimeline(){
         <button class="se-del" onclick="delStep(${i})" aria-label="このステップを削除">🗑</button>
       </div>
       <textarea class="se-op" rows="2" placeholder="オペレーション（例：中心から螺旋で全体を濡らす）"
-        oninput="opHint(this)" onchange="updateStep(${i},'op',this.value)">${(s.op||'').replace(/</g,'&lt;')}</textarea>
-      <div class="se-hint">${[...(s.op||'')].length} / ${OP_MAX}</div>
+        oninput="opHint(this)" onchange="updateStep(${i},'op',this.value)">${normalizeOp(s.op||'').replace(/</g,'&lt;')}</textarea>
+      <div class="se-hint">${[...normalizeOp(s.op||'')].length} / ${OP_MAX}</div>
       <div class="se-grid">
         <label>開始<input type="number" value="${s.time}" onchange="updateStep(${i},'time',this.value)"><span>秒</span></label>
         <label>長さ<input type="number" value="${s.duration||0}" onchange="updateStep(${i},'duration',this.value)"><span>秒</span></label>
@@ -1032,7 +1032,7 @@ function drawHUD(){
   H('hudNo').textContent=`STEP ${i+1}/${steps.length}`;
   H('hudPrevBtn').disabled=(i<=0); H('hudNextBtn').disabled=(i>=steps.length-1&&!finished);
   H('hudEla').textContent=`${fmt(e)} / ${fmt(totalTime)}`;
-  const opEl=H('hudOp'),opTxt=st.op||'',opN=[...opTxt].length;
+  const opEl=H('hudOp'),opTxt=normalizeOp(st.op||''),opN=[...opTxt].length;
   opEl.textContent=opTxt;
   opEl.classList.remove('op-m','op-s','op-xs');
   if(opN>22)      opEl.classList.add('op-xs');
@@ -1040,7 +1040,7 @@ function drawHUD(){
   else if(opN>8)  opEl.classList.add('op-m');
   hud.classList.toggle('longop',opN>14);
   const nx=steps[i+1];
-  H('hudNext').innerHTML= nx?`<b>次：</b>${nx.op||''}`:'<b>この後：</b>落とし切って完成';
+  H('hudNext').innerHTML= nx?`<b>次：</b>${normalizeOp(nx.op||'')}`:'<b>この後：</b>落とし切って完成';
   const lastCum=steps.reduce((a,x)=>a+x.pour,0);
   H('hudGoal').textContent= pouring ? (st._cumMl||0) : lastCum;
   H('hudSub').textContent= pouring
