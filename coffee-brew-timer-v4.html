@@ -690,8 +690,13 @@
       <div class="form-group"><label>新しい淹れ方に挑戦？</label><select id="fbChallenge"><option value="no">いつも通り</option><option value="yes">チャレンジ！</option></select></div>
     </div>
     <div class="feedback-export">
-      <button class="btn btn-accent" onclick="exportFeedback()">📋 写真付き共有 → Claudeへ</button>
-      <div class="export-hint">テキストをコピーしてClaudeに貼り付け</div>
+      <button class="btn btn-accent" onclick="exportFeedback()">📋 Claudeに渡す</button>
+      <div class="export-hint">Claudeに渡すテキストを出します</div>
+      <div id="fbOutBox" style="display:none;margin-top:12px;text-align:left">
+        <div class="export-hint" id="fbOutNote" style="margin-bottom:6px"></div>
+        <textarea id="fbOutText" rows="12" readonly
+          style="width:100%;font-size:.78rem;line-height:1.6"></textarea>
+      </div>
     </div>
   </div>
 
@@ -1260,17 +1265,19 @@ function buildFeedbackText(){const fb=gatherFeedback();const prefMap={good:'😊
   t+=`総合:${fb.overall!=null?fb.overall+'/10':'未記入'}${fb.overallMemo?' ('+fb.overallMemo+')':''}\n【基本の味】${(fb.main_tastes||[]).join(',')||'—'}\n【フレーバー】${fb.flavors.join(',')}${fb.flavor_categories&&fb.flavor_categories.length?' （分類: '+fb.flavor_categories.join('/')+'）':''}\n【テクスチャー】${fb.textures.join(',')}\n【次回】${fb.next_request}`;if(fb.challenge)t+='\n→チャレンジしたい！';return t;}
 async function exportFeedback(){
   const t=buildFeedbackText();
-  const photos=[];
-  try{if(fbPhotos.bed)photos.push(new File([fbPhotos.bed],'粉床.jpg',{type:fbPhotos.bed.type||'image/jpeg'}));if(fbPhotos.liquid)photos.push(new File([fbPhotos.liquid],'抽出液.jpg',{type:fbPhotos.liquid.type||'image/jpeg'}));}catch(e){/* File creation failed */}
-  // モバイルでWeb Share API対応の場合: 写真+テキストを一括共有
-  if(photos.length>0&&navigator.share){
-    try{const shareData={text:t,files:photos};if(navigator.canShare&&navigator.canShare(shareData)){await navigator.share(shareData);return;}}catch(e){if(e.name==='AbortError')return;}
+  // 1) 必ず画面に出す（コピーが失敗しても手で選択できるように）
+  const box=document.getElementById('fbOutBox'), ta=document.getElementById('fbOutText');
+  ta.value=t; box.style.display='block'; ta.focus(); ta.select();
+  box.scrollIntoView({behavior:'smooth',block:'nearest'});
+  const note=document.getElementById('fbOutNote');
+  // 2) 共有シートが使えるなら、そこからClaudeアプリへ直接渡せる
+  if(navigator.share){
+    try{ await navigator.share({text:t}); note.textContent='共有しました'; return; }
+    catch(e){ if(e.name==='AbortError'){note.textContent='下のテキストを選んでコピーしてください';return;} }
   }
-  // フォールバック: テキストのみクリップボードにコピー
-  try{await navigator.clipboard.writeText(t);alert(photos.length>0?'テキストをコピーしました！\n写真はカメラロールからClaudeに直接添付してください':'コピーしました！\nClaudeに貼り付けてください');}catch(e){
-    // clipboard APIも失敗した場合: textarea経由のフォールバック
-    const ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);alert(photos.length>0?'テキストをコピーしました！\n写真はカメラロールからClaudeに直接添付してください':'コピーしました！\nClaudeに貼り付けてください');
-  }
+  // 3) クリップボード（httpsでないと使えない環境がある）
+  try{ await navigator.clipboard.writeText(t); note.textContent='コピーしました。Claudeに貼り付けてください'; }
+  catch(e){ note.textContent='自動コピーできませんでした。下のテキストを長押しして全選択→コピーしてください'; }
 }
 function saveFeedbackLocal(){const fb=gatherFeedback();let logs=[];try{logs=JSON.parse(localStorage.getItem('brewLogs')||'[]');}catch(e){}fb.id=logs.length+1;logs.push(fb);try{localStorage.setItem('brewLogs',JSON.stringify(logs));}catch(e){}alert('保存しました！');loadLogs();}
 
