@@ -872,11 +872,17 @@ function loadFromURL(data){
 // ===== INIT =====
 function init(){
   renderSensoryRatings();renderFlavorTags();
-  if(!restoreSession())prepareBrew();
+  const _restored=restoreSession();
+  if(!_restored)prepareBrew();
   document.getElementById('beanWeight').addEventListener('input',updateRatio);
   document.getElementById('totalWater').addEventListener('input',updateRatio);
   const urlData=parseURLRecipe();
   if(urlData){loadFromURL(urlData);}else{loadPreset(0);}
+  // レシピを流し込んだ「後」に組み直す。これをしないと、FBテキストが参照する
+  // lastBrewRecipe が空のフォームのまま残り、▶スタートを押さない限り
+  // 豆量・湯量・挽き目・湯温・器具が記録に届かない（2026-08-20 発見）。
+  // 抽出中のセッションを復元した場合は、状態を壊すので呼ばない。
+  if(!_restored)prepareBrew();
   showInstallHint();
   initFbAutosave();
   showFbDraftBar();
