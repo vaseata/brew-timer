@@ -690,12 +690,21 @@
       <div class="form-group"><label>新しい淹れ方に挑戦？</label><select id="fbChallenge"><option value="no">いつも通り</option><option value="yes">チャレンジ！</option></select></div>
     </div>
     <div class="feedback-export">
+      <div id="fbDraftBar" style="display:none;background:var(--bg);border:1px solid var(--accent);border-radius:6px;padding:10px;margin-bottom:12px;text-align:left">
+        <div class="export-hint" id="fbDraftInfo" style="margin-bottom:6px"></div>
+        <button class="btn" onclick="restoreFbDraft()">↩︎ 下書きを表示</button>
+        <button class="btn" onclick="clearFbDraft()">🗑 削除</button>
+      </div>
       <button class="btn btn-accent" onclick="exportFeedback()">📋 Claudeに渡す</button>
-      <div class="export-hint">Claudeに渡すテキストを出します</div>
+      <div class="export-hint">コピーして、端末にも保存します</div>
       <div id="fbOutBox" style="display:none;margin-top:12px;text-align:left">
         <div class="export-hint" id="fbOutNote" style="margin-bottom:6px"></div>
         <textarea id="fbOutText" rows="12" readonly
           style="width:100%;font-size:.78rem;line-height:1.6"></textarea>
+        <div style="text-align:center;margin-top:8px">
+          <button class="btn" onclick="copyFeedbackAgain()">📋 もう一度コピー</button>
+          <button class="btn" id="fbShareBtn" style="display:none" onclick="shareFeedback()">📤 共有…</button>
+        </div>
       </div>
     </div>
   </div>
@@ -877,6 +886,8 @@ function init(){
   const urlData=parseURLRecipe();
   if(urlData){loadFromURL(urlData);}else{loadPreset(0);}
   showInstallHint();
+  initFbAutosave();
+  showFbDraftBar();
 }
 
 function showInstallHint(){
@@ -1213,7 +1224,7 @@ function calcPhotoTiming(file){
   const mins=Math.round(afterSec/60);
   return`抽出${mins}分後`;
 }
-function previewPhoto(input,id){const p=document.getElementById(id);if(input.files&&input.files[0]){const key=id.includes('bed')?'bed':'liquid';fbPhotos[key]=input.files[0];const r=new FileReader();r.onload=e=>{p.innerHTML=`<img src="${e.target.result}">`;};r.readAsDataURL(input.files[0]);const timing=calcPhotoTiming(input.files[0]);fbPhotoTimings[key]=timing;const autoEl=document.getElementById(key==='bed'?'bedTimingAuto':'liqTimingAuto');autoEl.textContent='⏱ '+timing;autoEl.style.display='block';}}
+// previewPhoto(): v4で写真アップロードUIを廃止したため削除（未定義の変数を参照して例外を投げていた）
 
 // Feedback
 let selAim=null,selFoam=null,photoTimes={bed:null,liq:null};
@@ -1247,7 +1258,7 @@ function gatherFeedback(){const se={};sensoryItems.forEach((item,i)=>{const _sl=
     .map(t=>({ja:t.textContent,en:t.dataset.en||'',cat:t.dataset.cat||''}));
   const flObj=pick('flavor'),tasteObj=pick('taste'),txObj=pick('texture');
   const fl=flObj.map(x=>x.ja);
-  const flavorCats=[...new Set(flObj.map(x=>x.cat))];const o=document.getElementById('fbFlavorOther').value;if(o)fl.push(o);const tx=txObj.map(x=>x.ja);const txo=document.getElementById('fbTextureOther').value;if(txo)tx.push(txo);return{date:new Date().toISOString().split('T')[0],time:new Date().toTimeString().slice(0,5),recipe:lastBrewRecipe||{bean:document.getElementById('beanName').value},actual:{time:document.getElementById('fbActualTime').value,temp:document.getElementById('fbActualTemp').value,notes:document.getElementById('fbNotes').value},photos:{bed:!!fbPhotos.bed,bedTiming:fbPhotoTimings.bed||'',liquid:!!fbPhotos.liquid,liqTiming:fbPhotoTimings.liquid||''},sensory:se,overall:document.getElementById('fbOverall').dataset.touched==='1'?parseInt(document.getElementById('fbOverall').value):null,
+  const flavorCats=[...new Set(flObj.map(x=>x.cat))];const o=document.getElementById('fbFlavorOther').value;if(o)fl.push(o);const tx=txObj.map(x=>x.ja);const txo=document.getElementById('fbTextureOther').value;if(txo)tx.push(txo);return{date:new Date().toISOString().split('T')[0],time:new Date().toTimeString().slice(0,5),recipe:lastBrewRecipe||{bean:document.getElementById('beanName').value},actual:{time:document.getElementById('fbActualTime').value,temp:document.getElementById('fbActualTemp').value,notes:document.getElementById('fbNotes').value},sensory:se,overall:document.getElementById('fbOverall').dataset.touched==='1'?parseInt(document.getElementById('fbOverall').value):null,
     aim:selAim,aim_memo:document.getElementById('fbAimMemo').value||'',
     foam_white_level:selFoam,
     kettle:document.getElementById('fbKettle').value||'',
@@ -1263,21 +1274,82 @@ function buildFeedbackText(){const fb=gatherFeedback();const prefMap={good:'😊
   const _se=sensoryItems.map(item=>fb.sensory[item.key]).filter(x=>x&&x.intensity!=null);
   if(_se.length){t+=`\n【官能評価（CVA）】強さ/10 + 好み\n`;_se.forEach(s=>{t+=`${s.label}: ${s.intensity}/10 ${prefMap[s.pref]||''} ${s.comment?'('+s.comment+')':''}\n`;});}
   t+=`総合:${fb.overall!=null?fb.overall+'/10':'未記入'}${fb.overallMemo?' ('+fb.overallMemo+')':''}\n【基本の味】${(fb.main_tastes||[]).join(',')||'—'}\n【フレーバー】${fb.flavors.join(',')}${fb.flavor_categories&&fb.flavor_categories.length?' （分類: '+fb.flavor_categories.join('/')+'）':''}\n【テクスチャー】${fb.textures.join(',')}\n【次回】${fb.next_request}`;if(fb.challenge)t+='\n→チャレンジしたい！';return t;}
+// ===== FB 書き出し =====
+// 順序が命：クリップボード → 画面表示 → （任意で）共有シート。
+// 旧版は navigator.share を先に呼び、成功すると return していたため、
+// モバイルではクリップボードに一度も書かれなかった（2026-08-19 id112で実害）。
+const FB_DRAFT_KEY='brewFbDraft';
+function saveFbDraft(t){
+  try{ localStorage.setItem(FB_DRAFT_KEY, JSON.stringify({text:t, saved:new Date().toLocaleString('ja-JP')})); }catch(e){}
+  showFbDraftBar();
+}
+function loadFbDraft(){ try{ return JSON.parse(localStorage.getItem(FB_DRAFT_KEY)||'null'); }catch(e){ return null; } }
+function showFbDraftBar(){
+  const bar=document.getElementById('fbDraftBar'); if(!bar)return;
+  const d=loadFbDraft();
+  if(!d||!d.text){ bar.style.display='none'; return; }
+  bar.style.display='block';
+  document.getElementById('fbDraftInfo').textContent='この端末に下書きが保存されています（'+d.saved+'）';
+}
+function restoreFbDraft(){
+  const d=loadFbDraft(); if(!d||!d.text)return;
+  const box=document.getElementById('fbOutBox'), ta=document.getElementById('fbOutText');
+  ta.value=d.text; box.style.display='block';
+  document.getElementById('fbOutNote').textContent='保存されていた下書きを表示しました（'+d.saved+'）';
+  box.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function clearFbDraft(){
+  if(!confirm('保存された下書きを削除しますか？'))return;
+  try{ localStorage.removeItem(FB_DRAFT_KEY); }catch(e){}
+  showFbDraftBar();
+}
+// FBタブの入力を1秒デバウンスで自動保存する（ボタンを押し忘れても消えないように）
+let _fbDraftTimer=null;
+function initFbAutosave(){
+  const tab=document.getElementById('tab-feedback'); if(!tab)return;
+  const save=()=>{ clearTimeout(_fbDraftTimer); _fbDraftTimer=setTimeout(()=>{
+    try{ const t=buildFeedbackText(); if(t) saveFbDraft(t); }catch(e){}
+  },1000); };
+  tab.addEventListener('input',save);
+  tab.addEventListener('change',save);
+  tab.addEventListener('click',e=>{ if(e.target.closest('button')) save(); });
+}
+async function copyToClipboard(t,ta){
+  try{ await navigator.clipboard.writeText(t); return true; }catch(e){}
+  // フォールバック：表示中のtextareaを実際に選択してコピー（iOSはreadonlyだと失敗する）
+  try{
+    if(ta){ ta.removeAttribute('readonly'); ta.focus(); ta.setSelectionRange(0,t.length);
+      const ok=document.execCommand('copy'); ta.setAttribute('readonly',''); return ok; }
+  }catch(e){}
+  return false;
+}
 async function exportFeedback(){
   const t=buildFeedbackText();
-  // 1) 必ず画面に出す（コピーが失敗しても手で選択できるように）
+  // 1) 何よりも先に端末へ保存する（画面の中だけに存在する状態を作らない）
+  saveFbDraft(t);
+  // 2) 必ず画面に出す（コピーが失敗しても手で選択できるように）
   const box=document.getElementById('fbOutBox'), ta=document.getElementById('fbOutText');
   ta.value=t; box.style.display='block'; ta.focus(); ta.select();
   box.scrollIntoView({behavior:'smooth',block:'nearest'});
   const note=document.getElementById('fbOutNote');
-  // 2) 共有シートが使えるなら、そこからClaudeアプリへ直接渡せる
-  if(navigator.share){
-    try{ await navigator.share({text:t}); note.textContent='共有しました'; return; }
-    catch(e){ if(e.name==='AbortError'){note.textContent='下のテキストを選んでコピーしてください';return;} }
-  }
-  // 3) クリップボード（httpsでないと使えない環境がある）
-  try{ await navigator.clipboard.writeText(t); note.textContent='コピーしました。Claudeに貼り付けてください'; }
-  catch(e){ note.textContent='自動コピーできませんでした。下のテキストを長押しして全選択→コピーしてください'; }
+  const shareBtn=document.getElementById('fbShareBtn');
+  if(shareBtn) shareBtn.style.display = navigator.share ? 'inline-block' : 'none';
+  // 3) クリップボードに書く（共有シートより「先」。ここが旧版のバグ）
+  const ok=await copyToClipboard(t,ta);
+  note.textContent = ok
+    ? '✅ コピーしました（この端末にも保存済み）。Claudeに貼り付けてください'
+    : '⚠️ 自動コピーできませんでした。下のテキストを長押し→全選択→コピー（内容は端末に保存済みです）';
+}
+async function copyFeedbackAgain(){
+  const ta=document.getElementById('fbOutText'), note=document.getElementById('fbOutNote');
+  const ok=await copyToClipboard(ta.value,ta);
+  note.textContent = ok ? '✅ コピーしました' : '⚠️ 自動コピー不可。長押し→全選択→コピーしてください';
+}
+async function shareFeedback(){
+  const ta=document.getElementById('fbOutText'), note=document.getElementById('fbOutNote');
+  if(!navigator.share){ note.textContent='この端末では共有シートを使えません'; return; }
+  try{ await navigator.share({text:ta.value}); note.textContent='共有しました（コピーも済んでいます）'; }
+  catch(e){ if(e.name!=='AbortError') note.textContent='共有できませんでした（コピーは済んでいます）'; }
 }
 function saveFeedbackLocal(){const fb=gatherFeedback();let logs=[];try{logs=JSON.parse(localStorage.getItem('brewLogs')||'[]');}catch(e){}fb.id=logs.length+1;logs.push(fb);try{localStorage.setItem('brewLogs',JSON.stringify(logs));}catch(e){}alert('保存しました！');loadLogs();}
 
