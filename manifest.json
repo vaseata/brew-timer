@@ -2,7 +2,7 @@
   "name": "Brew Timer",
   "short_name": "Brew Timer",
   "description": "Pour-over Coffee Brew Timer & Feedback",
-  "start_url": "./coffee-brew-timer.html",
+  "start_url": "./coffee-brew-timer-v4.html",
   "display": "standalone",
   "background_color": "#1a1410",
   "theme_color": "#1a1410",

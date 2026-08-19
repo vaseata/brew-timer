@@ -571,7 +571,7 @@
           <div class="form-group"><label>ドリッパー</label>
             <select id="dripper" onchange="autoSelectFilter()"><option value="V60 01">V60 01</option><option value="V60 02" selected>V60 02</option><option value="V60 NEO 01">V60 NEO 01</option><option value="V60 NEO 02">V60 NEO 02</option><option value="V60 MUGEN">V60 MUGEN</option><option value="Kalita 155">Kalita 155</option><option value="KONO 名門 MDK-21">KONO 名門ドリッパー MDK-21</option><option value="スイッチ">スイッチ</option><option value="ネルドリップ">ネルドリップ</option></select></div>
           <div class="form-group"><label>フィルター</label>
-            <select id="filter"><option value="HARIO V60ペーパー 白 1-2杯">HARIO V60ペーパー 白 1-2杯</option><option value="HARIO V60ペーパー 白 2-4杯">HARIO V60ペーパー 白 2-4杯</option><option value="CAFEC アバカ 円錐 1-2杯">CAFEC アバカ 円錐 1-2杯</option><option value="CAFEC アバカ 円錐 2-4杯" selected>CAFEC アバカ 円錐 2-4杯</option><option value="KONO 円すいペーパー MD-25">KONO 円すいペーパー MD-25</option><option value="カリタ ウェーブ 155">カリタ ウェーブ 155</option><option value="ネルフィルター">ネルフィルター</option></select></div>
+            <select id="filter"><option value="" selected>（未選択・記録時に確認）</option><option value="HARIO V60ペーパー 白 1-2杯">HARIO V60ペーパー 白 1-2杯</option><option value="HARIO V60ペーパー 白 2-4杯">HARIO V60ペーパー 白 2-4杯</option><option value="CAFEC アバカ 円錐 1-2杯">CAFEC アバカ 円錐 1-2杯</option><option value="CAFEC アバカ 円錐 2-4杯">CAFEC アバカ 円錐 2-4杯</option><option value="KONO 円すいペーパー MD-25">KONO 円すいペーパー MD-25</option><option value="カリタ ウェーブ 155">カリタ ウェーブ 155</option><option value="ネルフィルター">ネルフィルター</option></select></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>レシオ</label><input type="text" id="ratio" value="1:15" readonly style="color:var(--muted)"></div>
@@ -618,11 +618,11 @@
     <div class="section">
       <div class="section-title">📋 抽出フィードバック</div>
       <div class="form-row">
-        <div class="form-group"><label>実際の抽出時間</label><input type="text" id="fbActualTime" placeholder="2:35"></div>
-        <div class="form-group"><label>実際の湯温</label><input type="text" id="fbActualTemp" placeholder="86℃"></div>
+        <div class="form-group"><label>実際の抽出時間</label><input type="text" id="fbActualTime" placeholder="レシピ通りなら空欄"></div>
+        <div class="form-group"><label>実際の湯温</label><input type="text" id="fbActualTemp" placeholder="レシピ通りなら空欄"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>抽出液の重さ (g)</label><input type="number" id="fbBeverage" placeholder="211"></div>
+        <div class="form-group"><label>抽出液の重さ (g)</label><input type="number" id="fbBeverage" placeholder="測っていなければ空欄"></div>
         <div class="form-group"><label>ケトル</label><select id="fbKettle"><option value="">—</option><option>無印</option><option>EPEIOS</option></select></div>
       </div>
       <div class="form-group" style="margin-bottom:10px"><label>気になった点・変更点</label><textarea id="fbNotes" placeholder="2投目でやや速く注ぎすぎた"></textarea></div>
@@ -963,7 +963,10 @@ function opHint(el){
 }
 function addStep(){const l=steps[steps.length-1];steps.push({time:l?l.time+(l.duration||30):0,duration:30,pour:0,op:"新しいステップ",h:"中"});renderTimeline();}
 function removeStep(i){steps.splice(i,1);renderTimeline();}
-function autoSelectFilter(){const d=document.getElementById('dripper').value;const map={'V60 01':'HARIO V60ペーパー 白 1-2杯','V60 02':'CAFEC アバカ 円錐 2-4杯','V60 NEO 01':'HARIO V60ペーパー 白 1-2杯','V60 NEO 02':'CAFEC アバカ 円錐 2-4杯','V60 MUGEN':'CAFEC アバカ 円錐 2-4杯','Kalita 155':'カリタ ウェーブ 155','スイッチ':'CAFEC アバカ 円錐 2-4杯','ネルドリップ':'ネルフィルター','KONO 名門 MDK-21':'KONO 円すいペーパー MD-25'};document.getElementById('filter').value=map[d]||'CAFEC アバカ 円錐 2-4杯';}
+// autoSelectFilter(): 撤去（2026-08-19）。ドリッパー名からフィルターを機械的に推測し、
+// 断定形で書き出していた（CLAUDE.md『フィルターはサイズだけで種類を推測しない』違反）。
+// 未指定なら空のままにし、記録時に本人へ確認する。
+function autoSelectFilter(){/* 何もしない：推測はしない */}
 
 // Audio
 function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx;}
@@ -1231,15 +1234,20 @@ function gatherFeedback(){const se={};sensoryItems.forEach((item,i)=>{const _sl=
     .map(t=>({ja:t.textContent,en:t.dataset.en||'',cat:t.dataset.cat||''}));
   const flObj=pick('flavor'),tasteObj=pick('taste'),txObj=pick('texture');
   const fl=flObj.map(x=>x.ja);
-  const flavorCats=[...new Set(flObj.map(x=>x.cat))];const o=document.getElementById('fbFlavorOther').value;if(o)fl.push(o);const tx=txObj.map(x=>x.ja);const txo=document.getElementById('fbTextureOther').value;if(txo)tx.push(txo);return{date:new Date().toISOString().split('T')[0],time:new Date().toTimeString().slice(0,5),recipe:lastBrewRecipe||{bean:document.getElementById('beanName').value},actual:{time:document.getElementById('fbActualTime').value,temp:document.getElementById('fbActualTemp').value,notes:document.getElementById('fbNotes').value},sensory:se,overall:document.getElementById('fbOverall').dataset.touched==='1'?parseInt(document.getElementById('fbOverall').value):null,
+  const flavorCats=[...new Set(flObj.map(x=>x.cat))];const o=document.getElementById('fbFlavorOther').value;if(o)fl.push(o);const tx=txObj.map(x=>x.ja);const txo=document.getElementById('fbTextureOther').value;if(txo)tx.push(txo);const _n=new Date();const _p=x=>String(x).padStart(2,'0');return{date:`${_n.getFullYear()}-${_p(_n.getMonth()+1)}-${_p(_n.getDate())}`,time:_n.toTimeString().slice(0,5),recipe:lastBrewRecipe||{bean:document.getElementById('beanName').value},actual:{time:document.getElementById('fbActualTime').value,temp:document.getElementById('fbActualTemp').value,notes:document.getElementById('fbNotes').value},sensory:se,overall:document.getElementById('fbOverall').dataset.touched==='1'?parseInt(document.getElementById('fbOverall').value):null,
     aim:selAim,aim_memo:document.getElementById('fbAimMemo').value||'',
     foam_white_level:selFoam,
     kettle:document.getElementById('fbKettle').value||'',
     beverage_weight_g:parseFloat(document.getElementById('fbBeverage').value)||null,
     card_flavors:gatherCardFlavors(),overallMemo:document.getElementById('fbOverallMemo').value||'',flavors:fl,flavor_categories:flavorCats,main_tastes:tasteObj.map(x=>x.ja),textures:tx,next_request:document.getElementById('fbNextRequest').value,challenge:document.getElementById('fbChallenge').value==='yes'};}
 function buildFeedbackText(){const fb=gatherFeedback();const prefMap={good:'😊',ok:'😐',bad:'😞','':''};let t=`☕ 抽出フィードバック\n日時: ${fb.date} ${fb.time}\n`;if(fb.recipe)t+=`豆: ${fb.recipe.bean||''} / ${fb.recipe.weight||''}g / ${fb.recipe.water||''}g / C2 ${fb.recipe.grind||''}cl / ${fb.recipe.temp||''}℃ / ${fb.recipe.dripper||''} / ${fb.recipe.filter||''}\n`;t+=`\n【🎯狙い】${fb.aim||'未記入'}${fb.aim_memo?' — '+fb.aim_memo:''}\n`;
-  t+=`【操作】抽出時間:${fb.actual.time} 湯温:${fb.actual.temp} ケトル:${fb.kettle||'未記入'}\n${fb.actual.notes}\n`;
-  t+=`【実測】抽出液:${fb.beverage_weight_g!=null?fb.beverage_weight_g+'g':'未計測'}\n`;
+  // 値の出所を必ず明示する（原則14）。未入力なら提案値を括弧で添える
+  // 提案値はレシピの実データから引く（placeholderは例示が混じるため信用しない・原則14）
+  const _sugTime=(typeof totalTime==='number'&&totalTime>0)?fmt(totalTime):'';
+  const _sugTemp=(document.getElementById('waterTemp')||{}).value||'';
+  const _prov=(v,sug)=>v?`${v}（実測）`:(sug?`未記入（提案 ${sug}）`:'未記入');
+  t+=`【操作】抽出時間:${_prov(fb.actual.time,_sugTime)} 湯温:${_prov(fb.actual.temp,_sugTemp?_sugTemp+'℃':'')} ケトル:${fb.kettle||'未記入'}\n${fb.actual.notes}\n`;
+  t+=`【実測】抽出液:${fb.beverage_weight_g!=null?fb.beverage_weight_g+'g（実測）':'未計測'}\n`;
   t+=`【白い泡】${fb.foam_white_level!=null?'Lv'+fb.foam_white_level:'未記入'}\n`;
   if(fb.card_flavors&&fb.card_flavors.length)t+=`【カード照合】${fb.card_flavors.map(c=>c.name+':'+c.felt).join(' / ')}\n`;
   const _se=sensoryItems.map(item=>fb.sensory[item.key]).filter(x=>x&&x.intensity!=null);
@@ -1275,11 +1283,23 @@ function clearFbDraft(){
   showFbDraftBar();
 }
 // FBタブの入力を1秒デバウンスで自動保存する（ボタンを押し忘れても消えないように）
+// 実質的な入力が1つでもあるか（空フォームで下書きを上書きしないため）
+function fbHasInput(){
+  const ids=['fbActualTime','fbActualTemp','fbBeverage','fbNotes','fbKettle','fbAimMemo',
+             'fbOverallMemo','fbFlavorOther','fbTextureOther','fbNextRequest'];
+  if(ids.some(id=>{const el=document.getElementById(id);return el&&el.value&&el.value.trim();}))return true;
+  if(selAim!==null||selFoam!==null)return true;
+  if(document.querySelector('.flavor-tag.selected'))return true;
+  if(document.querySelector('.cva-pref-btn.sel-good,.cva-pref-btn.sel-ok,.cva-pref-btn.sel-bad'))return true;
+  const _ov=document.getElementById('fbOverall');
+  if(_ov&&_ov.dataset.touched==='1')return true;
+  return false;
+}
 let _fbDraftTimer=null;
 function initFbAutosave(){
   const tab=document.getElementById('tab-feedback'); if(!tab)return;
   const save=()=>{ clearTimeout(_fbDraftTimer); _fbDraftTimer=setTimeout(()=>{
-    try{ const t=buildFeedbackText(); if(t) saveFbDraft(t); }catch(e){}
+    try{ const t=buildFeedbackText(); if(t&&fbHasInput()) saveFbDraft(t); }catch(e){}
   },1000); };
   tab.addEventListener('input',save);
   tab.addEventListener('change',save);
@@ -1322,92 +1342,9 @@ async function shareFeedback(){
   try{ await navigator.share({text:ta.value}); note.textContent='共有しました（コピーも済んでいます）'; }
   catch(e){ if(e.name!=='AbortError') note.textContent='共有できませんでした（コピーは済んでいます）'; }
 }
-function saveFeedbackLocal(){const fb=gatherFeedback();let logs=[];try{logs=JSON.parse(localStorage.getItem('brewLogs')||'[]');}catch(e){}fb.id=logs.length+1;logs.push(fb);try{localStorage.setItem('brewLogs',JSON.stringify(logs));}catch(e){}alert('保存しました！');loadLogs();}
-
-// Log
-function loadLogs(){const _le=document.getElementById('logEntries');if(!_le)return;let logs=[];try{logs=JSON.parse(localStorage.getItem('brewLogs')||'[]');}catch(e){}const el=document.getElementById('logEntries');if(!logs.length){el.innerHTML='<div class="log-empty">まだ記録がありません</div>';return;}el.innerHTML=logs.slice().reverse().map(l=>{const fl=(l.flavors||[]).map(f=>`<span class="flavor-tag" style="cursor:default;font-size:.68rem;padding:2px 7px">${f}</span>`).join('');return`<div class="log-entry"><div class="log-header"><span class="log-date">${l.date} ${l.time}</span><span class="log-score">${l.overall||'?'}/10</span></div><div class="log-bean">${l.recipe?.bean||''}</div><div class="log-params">${l.recipe?.weight||''}g/${l.recipe?.water||''}ml/C2 ${l.recipe?.grind||''}/${l.recipe?.temp||''}℃/${l.recipe?.dripper||''}${l.recipe?.filter?' / '+l.recipe.filter:''}</div>${fl?`<div class="log-flavors">${fl}</div>`:''}</div>`;}).join('');}
-function exportAllLogs(){let l=[];try{l=JSON.parse(localStorage.getItem('brewLogs')||'[]');}catch(e){}const b=new Blob([JSON.stringify({brew_log:l},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='brew-log.json';a.click();}
-function clearLogs(){if(confirm('全記録を削除？')){try{localStorage.removeItem('brewLogs');}catch(e){}loadLogs();}}
-
-// ===== BREW LOG SYNC: Import/Export for brew-log.json (Claude) compatibility =====
-function convertClaudeToLocal(e){
-  const r=e.recipe||{},a=e.actual||{};
-  const rm={'浅煎り':'light','中煎り':'medium','中浅煎り':'medium','中深煎り':'dark','深煎り':'dark','フルシティロースト（中深煎り〜深煎り）':'dark'};
-  const sm={},si=['酸味','甘さ','苦味','ボディ','後味','クリーンさ'];
-  const ck={'酸味':'acidity','甘さ':'sweetness','苦味':'bitterness','ボディ':'body','後味':'aftertaste','クリーンさ':['cleanness','clean']};
-  if(e.sensory){si.forEach(it=>{
-    const ks=Array.isArray(ck[it])?ck[it]:[ck[it]];let v=null;
-    for(const k of ks){if(e.sensory[k]!==undefined){v=e.sensory[k];break;}}
-    if(v===null){sm[it]={score:0,comment:''};return;}
-    if(typeof v==='object'){sm[it]={score:Math.round((v.intensity||0)/2),comment:v.comment||''};}
-    else{sm[it]={score:v>5?Math.round(v/2):v,comment:''};}
-  });}
-  let fl=[];if(e.flavor_notes){fl=Array.isArray(e.flavor_notes)?e.flavor_notes:[e.flavor_notes];}
-  return{date:e.date||'',time:e.time||'',
-    recipe:{bean:e.bean||r.bean||'',roast:rm[e.roast]||e.roast||'medium',
-      weight:String(r.bean_weight_g||r.weight||''),water:String(r.water_ml||r.water||''),
-      ratio:r.ratio||'',grind:String(r.grind_clicks||r.grind||''),
-      temp:String(r.water_temp_c||r.temp||''),dripper:r.dripper||'',
-      filter:r.filter||'',target_time:r.target_time||''},
-    actual:{time:a.total_time||a.time||'',temp:String(a.water_temp_c||a.temp||''),notes:a.notes||''},
-    bed:{flatness:(e.bed_analysis||{}).flatness||'',wall:(e.bed_analysis||{}).wall_residue||''},
-    liquid:{color:(e.liquid_analysis||{}).color_intensity||'',clarity:(e.liquid_analysis||{}).clarity||''},
-    sensory:sm,overall:e.sensory?(e.sensory.overall||0):0,flavors:fl,
-    next_request:e.next_request||'',challenge:e.challenge_new_method||false,
-    _claude_extra:{flavor_detail:e.flavor_detail||null,textures:e.textures||null,
-      barista_feedback:e.barista_feedback||null,improvement_note:e.improvement_note||null,
-      flavor_call:e.flavor_call||null,inventory_snapshot:e.inventory_snapshot||null}};
-}
-function convertLocalToClaude(e){
-  const r=e.recipe||{},a=e.actual||{};
-  const rm={'light':'浅煎り','medium':'中煎り','dark':'深煎り'};
-  const se={},ck={'酸味':'acidity','甘さ':'sweetness','苦味':'bitterness','ボディ':'body','後味':'aftertaste','クリーンさ':'cleanness'};
-  if(e.sensory){for(const[j,en] of Object.entries(ck)){const s=e.sensory[j];
-    if(s){se[en]={intensity:(s.score||0)*2,pref:s.score>=3?'good':'ok',comment:s.comment||''};}
-  }se.overall=e.overall||0;}
-  const res={date:e.date||'',time:e.time||'',bean:r.bean||'',roast:rm[r.roast]||r.roast||'',
-    recipe:{bean_weight_g:parseInt(r.weight)||0,water_ml:parseInt(r.water)||0,
-      ratio:r.ratio||(r.weight&&r.water?'1:'+(parseInt(r.water)/parseInt(r.weight)).toFixed(1):''),
-      grind_clicks:parseInt(r.grind)||0,water_temp_c:parseInt(r.temp)||0,
-      dripper:r.dripper||'',filter:r.filter||'',target_time:r.target_time||''},
-    actual:{total_time:a.time||'',water_temp_c:parseInt(a.temp)||null,notes:a.notes||''},
-    sensory:se,flavor_notes:e.flavors||[],next_request:e.next_request||'',
-    challenge_new_method:e.challenge||false};
-  if(e._claude_extra){const c=e._claude_extra;
-    if(c.flavor_detail)res.flavor_detail=c.flavor_detail;
-    if(c.textures)res.textures=c.textures;
-    if(c.barista_feedback)res.barista_feedback=c.barista_feedback;
-    if(c.improvement_note)res.improvement_note=c.improvement_note;
-    if(c.flavor_call)res.flavor_call=c.flavor_call;
-    if(c.inventory_snapshot)res.inventory_snapshot=c.inventory_snapshot;}
-  return res;
-}
-function importLogs(){
-  const inp=document.createElement('input');inp.type='file';inp.accept='.json';
-  inp.onchange=ev=>{const f=ev.target.files[0];if(!f)return;
-    const rd=new FileReader();rd.onload=re=>{try{
-      const d=JSON.parse(re.target.result);let imp=[];
-      if(d.brew_log&&Array.isArray(d.brew_log)){imp=d.brew_log.map(convertClaudeToLocal);}
-      else if(Array.isArray(d)){imp=d;}
-      else{alert('対応していない形式です');return;}
-      let ex=[];try{ex=JSON.parse(localStorage.getItem('brewLogs')||'[]');}catch(e){}
-      let ad=0;imp.forEach(en=>{
-        if(!ex.some(x=>x.date===en.date&&x.time===en.time)){en.id=ex.length+1;ex.push(en);ad++;}});
-      ex.sort((a,b)=>((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||'')));
-      ex.forEach((e,i)=>e.id=i+1);
-      localStorage.setItem('brewLogs',JSON.stringify(ex));loadLogs();
-      alert('インポート完了！\n新規追加: '+ad+'件\nスキップ(重複): '+(imp.length-ad)+'件\n合計: '+ex.length+'件');
-    }catch(err){alert('読み込みエラー: '+err.message);}};rd.readAsText(f);};inp.click();
-}
-function exportAllLogsEnhanced(){
-  let lg=[];try{lg=JSON.parse(localStorage.getItem('brewLogs')||'[]');}catch(e){}
-  if(!lg.length){alert('エクスポートする記録がありません');return;}
-  const cl=lg.map((e,i)=>{const c=convertLocalToClaude(e);c.id=i+1;return c;});
-  const bl=new Blob([JSON.stringify({brew_log:cl},null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download='brew-log.json';a.click();
-  URL.revokeObjectURL(a.href);
-}
-
+// 記録タブ関連の書き出し／読み込み関数群は撤去（2026-08-19）。
+// v4に記録タブは無く、どれもUIから呼ばれていなかった。
+// 中には空配列を brew-log.json という名前で保存する関数もあり、事故要因だった。
 init();
 
 // ===== QR CODE =====
@@ -1485,7 +1422,13 @@ async function copyRecipeURL(){
 function closeQR(){document.getElementById('qrOverlay').classList.remove('show');}
 
 // Service Worker registration
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+// Service Worker は撤去（2026-08-19）。PWAではなくSafariでQRから開く運用のため
+// オフライン動作は不要で、cache-first が「修正が1回遅れて届く」原因になっていた。
+// 既に登録済みの端末のために、登録解除とキャッシュ削除だけ行う。
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{});
+  if(window.caches) caches.keys().then(ks=>ks.forEach(k=>caches.delete(k))).catch(()=>{});
+}
 </script>
 </body>
 </html>
