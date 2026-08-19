@@ -650,14 +650,6 @@
       <div style="color:var(--muted);font-size:.68rem;margin-top:6px">1=ほぼ無い / 3=部分的 / 4=全面を覆う / 5=厚く持続。<b>読むのは注湯中の泡</b></div>
     </div>
     <div class="section">
-      <div class="section-title">📸 写真の時刻</div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-muted" onclick="markPhoto('bed')" style="flex:1">📸 粉床を撮った<br><span id="bedTimeLbl" style="font-size:.7rem;color:var(--accent)">—</span></button>
-        <button class="btn btn-muted" onclick="markPhoto('liq')" style="flex:1">📸 抽出液を撮った<br><span id="liqTimeLbl" style="font-size:.7rem;color:var(--accent)">—</span></button>
-      </div>
-      <div style="color:var(--muted);font-size:.68rem;margin-top:6px;text-align:center">写真はスマホのカメラで撮り、Claudeに直接貼ってください。ここでは<b>撮った時刻</b>だけ記録します</div>
-    </div>
-    <div class="section">
       <details>
         <summary class="section-title" style="cursor:pointer;list-style:revert">👅 官能評価（任意・ブルームが指定した回だけ）</summary>
         <div class="cva-legend">スライダー = 感じた<b>強さ</b> / 右の顔 = <b>好み</b>。<b>触らなければ「未入力」として記録されます</b>（適当に入れるより空欄のほうが正確）</div>
@@ -1210,33 +1202,14 @@ function renderFlavorTags(){
   const tb=document.getElementById('textureTags');tb.innerHTML='';
   Object.entries(textureCategories).forEach(([k,c])=>acc(tb,k,c,'texture'));
 }
-function calcPhotoTiming(file){
-  if(!brewStartTime)return'';
-  const now=Date.now();
-  const fileTime=file.lastModified||now;
-  // lastModifiedが現実的か判定（抽出開始の60秒前〜現在+10秒の範囲内）
-  const useTime=(fileTime>=brewStartTime-60000&&fileTime<=now+10000)?fileTime:now;
-  const diffSec=Math.round((useTime-brewStartTime)/1000);
-  if(diffSec<0)return`抽出${Math.abs(diffSec)}秒前`;
-  if(diffSec<=totalTime)return`注湯中 @${fmt(diffSec)}`;
-  const afterSec=diffSec-totalTime;
-  if(afterSec<60)return`抽出直後（+${afterSec}秒）`;
-  const mins=Math.round(afterSec/60);
-  return`抽出${mins}分後`;
-}
 // previewPhoto(): v4で写真アップロードUIを廃止したため削除（未定義の変数を参照して例外を投げていた）
 
 // Feedback
-let selAim=null,selFoam=null,photoTimes={bed:null,liq:null};
+let selAim=null,selFoam=null;
 function setAim(b){document.querySelectorAll('.aim-btn').forEach(x=>x.classList.remove('sel'));
   b.classList.add('sel');selAim=b.dataset.aim;}
 function setFoam(b){document.querySelectorAll('.foam-btn').forEach(x=>x.classList.remove('sel'));
   b.classList.add('sel');selFoam=parseInt(b.dataset.foam);}
-function markPhoto(which){
-  const t=(typeof elapsed==='number'&&brewStartTime)?fmt(elapsed):'—';
-  photoTimes[which]=t;
-  document.getElementById(which==='bed'?'bedTimeLbl':'liqTimeLbl').textContent=t;
-}
 // カードのフレーバーを照合する
 function renderCardFlavors(){
   const raw=(document.getElementById('cardFlavorSrc')||{}).value||'';
@@ -1263,13 +1236,11 @@ function gatherFeedback(){const se={};sensoryItems.forEach((item,i)=>{const _sl=
     foam_white_level:selFoam,
     kettle:document.getElementById('fbKettle').value||'',
     beverage_weight_g:parseFloat(document.getElementById('fbBeverage').value)||null,
-    photo_times:{bed:photoTimes.bed,liquid:photoTimes.liq},
     card_flavors:gatherCardFlavors(),overallMemo:document.getElementById('fbOverallMemo').value||'',flavors:fl,flavor_categories:flavorCats,main_tastes:tasteObj.map(x=>x.ja),textures:tx,next_request:document.getElementById('fbNextRequest').value,challenge:document.getElementById('fbChallenge').value==='yes'};}
 function buildFeedbackText(){const fb=gatherFeedback();const prefMap={good:'😊',ok:'😐',bad:'😞','':''};let t=`☕ 抽出フィードバック\n日時: ${fb.date} ${fb.time}\n`;if(fb.recipe)t+=`豆: ${fb.recipe.bean||''} / ${fb.recipe.weight||''}g / ${fb.recipe.water||''}g / C2 ${fb.recipe.grind||''}cl / ${fb.recipe.temp||''}℃ / ${fb.recipe.dripper||''} / ${fb.recipe.filter||''}\n`;t+=`\n【🎯狙い】${fb.aim||'未記入'}${fb.aim_memo?' — '+fb.aim_memo:''}\n`;
   t+=`【操作】抽出時間:${fb.actual.time} 湯温:${fb.actual.temp} ケトル:${fb.kettle||'未記入'}\n${fb.actual.notes}\n`;
   t+=`【実測】抽出液:${fb.beverage_weight_g!=null?fb.beverage_weight_g+'g':'未計測'}\n`;
   t+=`【白い泡】${fb.foam_white_level!=null?'Lv'+fb.foam_white_level:'未記入'}\n`;
-  t+=`【写真の時刻】粉床:${fb.photo_times.bed||'—'} / 抽出液:${fb.photo_times.liquid||'—'}\n`;
   if(fb.card_flavors&&fb.card_flavors.length)t+=`【カード照合】${fb.card_flavors.map(c=>c.name+':'+c.felt).join(' / ')}\n`;
   const _se=sensoryItems.map(item=>fb.sensory[item.key]).filter(x=>x&&x.intensity!=null);
   if(_se.length){t+=`\n【官能評価（CVA）】強さ/10 + 好み\n`;_se.forEach(s=>{t+=`${s.label}: ${s.intensity}/10 ${prefMap[s.pref]||''} ${s.comment?'('+s.comment+')':''}\n`;});}
