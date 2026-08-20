@@ -575,11 +575,11 @@
         </div>
         <div class="form-row">
           <div class="form-group"><label>レシオ</label><input type="text" id="ratio" value="1:15" readonly style="color:var(--muted)"></div>
-          <div class="form-group"><label>豆量 (g)</label><input type="number" id="beanWeight" value="15" min="8" max="30"></div>
+          <div class="form-group"><label>豆量 (g)</label><input type="number" id="beanWeight" value="15" min="8" max="30" step="0.1"></div>
           <div class="form-group"><label>C2クリック数</label><input type="number" id="grindClicks" value="16" min="8" max="30"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>総湯量 (g)</label><input type="number" id="totalWater" value="225" min="100" max="500"></div>
+          <div class="form-group"><label>総湯量 (g)</label><input type="number" id="totalWater" value="225" min="50" max="500" step="1"></div>
           <div class="form-group"><label>湯温 (℃)</label><input type="number" id="waterTemp" value="90" min="75" max="100"></div>
           <div class="form-group"><label>目標抽出時間</label><input type="text" id="targetTime" value="" readonly style="color:var(--muted)" placeholder="タイムラインから自動計算"></div>
         </div>
@@ -804,7 +804,7 @@ function parseURLRecipe(){
   if(!p.has('bean'))return null;
   const recipe={
     bean:p.get('bean')||'',roast:p.get('roast')||'medium',
-    weight:parseInt(p.get('w'))||15,water:parseInt(p.get('water'))||225,
+    weight:parseFloat(p.get('w'))||15,water:parseFloat(p.get('water'))||225,
     grind:parseInt(p.get('grind'))||16,temp:parseInt(p.get('temp'))||90,
     dripper:p.get('dripper')||'V60 02',
     filter:p.get('filter')||'',
@@ -1371,8 +1371,8 @@ function getCurrentRecipeURL(){
   const recipe={
     bean:document.getElementById('beanName').value,
     roast:document.getElementById('roastLevel').value,
-    weight:parseInt(document.getElementById('beanWeight').value)||15,
-    water:parseInt(document.getElementById('totalWater').value)||225,
+    weight:parseFloat(document.getElementById('beanWeight').value)||15,
+    water:parseFloat(document.getElementById('totalWater').value)||225,
     grind:parseInt(document.getElementById('grindClicks').value)||16,
     temp:parseInt(document.getElementById('waterTemp').value)||90,
     dripper:document.getElementById('dripper').value,
