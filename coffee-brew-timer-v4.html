@@ -222,11 +222,8 @@
   .hud.on{display:flex}
   .hud-flood{position:absolute;left:0;right:0;bottom:0;height:0%;z-index:0;background:var(--hud-pour);
     transition:height .2s linear,background-color .35s}
-  .hud-flood::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--hud-pour-line);opacity:.95}
   .hud.wait .hud-flood{background:var(--hud-wait)}
-  .hud.wait .hud-flood::before{background:var(--hud-wait-line)}
   .hud.warn .hud-flood{background:var(--hud-warn);animation:hudPulse .5s ease-in-out infinite alternate}
-  .hud.warn .hud-flood::before{background:var(--hud-warn-line)}
   @keyframes hudPulse{to{opacity:.62}}
   @media (prefers-reduced-motion:reduce){.hud.warn .hud-flood{animation:none}}
   .hud-tap{position:absolute;inset:0;z-index:1;border:0;background:transparent;cursor:pointer}
@@ -235,21 +232,42 @@
     font-variant-numeric:tabular-nums}
   .hud-top .no{font-weight:700;color:var(--accent);letter-spacing:.06em}
   .hud-core{position:relative;z-index:1;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
-    justify-content:center;align-items:center;padding:0 12px;gap:4px;text-align:center}
+    justify-content:center;align-items:center;padding:0 12px;gap:0;text-align:center}
+  /* 「いま」の枠：水位アニメを透かすため地は半透明、線は細く */
+  .hud-now{display:flex;flex-direction:column;align-items:center;gap:2px;max-width:100%;
+    padding:0;border:0;background:none}
   .hud-op{font-size:clamp(32px,9.2vw,46px);font-weight:800;line-height:1.18;color:var(--hud-ink);
     max-width:100%;overflow-wrap:anywhere;text-wrap:balance}
   .hud-op.op-m{font-size:clamp(26px,7.2vw,36px)}
   .hud-op.op-s{font-size:clamp(21px,5.8vw,28px);line-height:1.3}
   .hud-op.op-xs{font-size:clamp(18px,4.9vw,23px);line-height:1.35}
   .hud.longop .hud-goal{font-size:clamp(64px,24vw,124px)}
-  .hud.longop .hud-next{margin-bottom:8px}
-  .hud-next{font-size:19px;color:var(--hud-sub);margin-bottom:14px;max-width:100%;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hud.longop .hud-next{margin-top:18px}
+  /* 次の指示：枠外・28px離す・薄く小さく。↓を独立した行に置いて「これは先の話」と示す */
+  .hud-next{font-size:15px;font-weight:500;line-height:1.5;color:var(--hud-sub);opacity:.55;
+    margin-top:28px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hud-next .ar{display:block;font-size:19px;line-height:1;margin-bottom:6px;opacity:.75;
+    font-weight:400}
   .hud-next b{color:var(--hud-sub);font-weight:600}
   .hud-goal{display:flex;align-items:baseline;gap:.04em;line-height:.9;color:var(--hud-ink);
     font-size:clamp(92px,33vw,176px);font-weight:800;letter-spacing:-.035em;font-variant-numeric:tabular-nums}
   .hud-goal .u{font-size:.4em;color:var(--hud-sub);font-weight:700}
   .hud-sub{font-size:21px;color:var(--accent);font-variant-numeric:tabular-nums}
+  /* 大きい数字が何の数字なのかを、数字の上に置く（2026-08-27） */
+  .hud-goal-lbl{font-size:14px;font-weight:600;letter-spacing:.02em;color:var(--hud-sub);
+    opacity:.75;margin-bottom:-2px}
+  /* 注がないステップは「注がない」を主役にする。従ってはいけない数字を大きく出さない */
+  .hud-nopour{font-size:clamp(40px,12vw,60px);font-weight:800;color:var(--hud-ink);line-height:1.1}
+  /* .hud-goal は display:flex なので、UA の [hidden] では消えない */
+  .hud-now [hidden]{display:none!important}
+  /* 中身が1つのときは枠を消し、その1つを主役の大きさで出す */
+  .hud-now.bare{border:0;padding:0;background:none}
+  .hud-now.bare .hud-state{font-size:clamp(34px,10vw,46px);font-weight:800;line-height:1.15;
+    color:var(--hud-ink);border:0;border-radius:0;padding:0;margin:0;letter-spacing:.08em;opacity:1}
+  /* 器具の状態（スイッチの浸漬／透過など）。レシピが m= を持つときだけ出る */
+  .hud-state{font-size:14px;font-weight:800;letter-spacing:.16em;line-height:1;
+    color:var(--hud-sub);border:1.5px solid var(--hud-sub);border-radius:999px;
+    padding:5px 13px 5px 15px;margin-bottom:8px;opacity:.85}
   .hud-remain{position:relative;z-index:1;text-align:center;font-size:30px;font-weight:700;
     color:var(--hud-sub);font-variant-numeric:tabular-nums;padding:0 16px 10px}
   .hud-remain small{font-size:.62em;margin-left:.14em}
@@ -504,12 +522,16 @@
     <button class="hud-nav" id="hudNextBtn" onclick="jumpStep(1)" aria-label="次のステップへ">▶</button>
   </div>
   <div class="hud-core">
-    <div class="hud-op" id="hudOp"></div>
+    <!-- いまやること：文言・目標g・ペースを1つの枠に閉じる（2026-08-27 ヤヌキ指定） -->
+    <div class="hud-now" id="hudNow">
+      <div class="hud-state" id="hudState" hidden></div>
+      <div class="hud-op" id="hudOp"></div>
+      <div class="hud-goal" id="hudGoalRow"><span id="hudGoal">0</span><span class="u">g</span></div>
+      <div class="hud-sub" id="hudSub"></div>
+    </div>
+    <!-- 次の指示は枠の外・下・薄く。↓で「まだ先」と分かるようにする -->
     <div class="hud-next" id="hudNext"></div>
-    <div class="hud-goal"><span id="hudGoal">0</span><span class="u">g</span></div>
-    <div class="hud-sub" id="hudSub"></div>
   </div>
-  <div class="hud-remain"><span id="hudRem">0</span><small>秒</small></div>
   <div class="hud-bottom">
     <button class="btn btn-muted" onclick="closeHud()">▼ 画面を閉じる</button>
     <button class="btn btn-danger" onclick="stopBrew()">■ 終了</button>
@@ -788,9 +810,39 @@ function capLen(el,max,hintId){
   const h=document.getElementById(hintId);
   if(h){h.textContent=`${a.length} / ${max}`;h.classList.toggle('over',a.length>=max);}
 }
-function stripOpLabel(t){return String(t||'').trim().replace(/^[^:：]{1,8}[:：]\s*/,'');}
-function normalizeOp(t){const a=[...stripOpLabel(t)];return a.length>OP_MAX?a.slice(0,OP_MAX).join(''):a.join('');}
+// ⚠️ 2026-08-27の事故（アカシアヒルズ1杯を失った）の再発防止。
+// 旧版は /^[^:：]{1,8}[:：]\s*/ で、①コロンの直後に空白を要求せず ②ラベル部に「(」を許した。
+// そのため「浸漬: 触らず待つ(3:00まで)」が、読み込み時と描画時の二重適用で
+// 2周目に「触らず待つ(3:」まで剥がされ、画面には「00まで)」だけが残った。
+// 剥がしは必ず①1回だけ ②冪等（2回かけても結果が変わらない）であること。
+const OP_LABEL_RE=/^[^\s:：()（）]{1,8}[:：][ \u3000]+/;
+function stripOpLabel(t){return String(t||'').trim().replace(OP_LABEL_RE,'');}
+// 目標抽出時間を文言に直書きすると、目標を変えた瞬間に文言が嘘になる。
+// レシピ側は {目標抽出時間} と書き、表示のときに実際の値へ差し替える（2026-08-27 ヤヌキ）。
+// 記法は1種類だけ。短縮形を併設すると表記ゆれになる。
+function targetTimeStr(){
+  const el=document.getElementById('targetTime');
+  const v=el&&el.value?String(el.value).trim():'';
+  return v||(totalTime?fmt(totalTime):'');
+}
+function expandOp(t){return String(t||'').replace(/\{目標抽出時間\}/g,targetTimeStr());}
+function clampOp(t){const a=[...String(t||'').trim()];return a.length>OP_MAX?a.slice(0,OP_MAX).join(''):a.join('');}
+// ⚠️ 展開は「描画のとき」だけ。読み込み時に展開すると、まだ目標時間が入る前の
+// 初期値が文言に焼き付き、記法そのものが失われる（2026-08-27 実測で発覚）。
+function drawOp(t){return clampOp(expandOp(t));}
+// 保存する側は切り詰めない。切るのは表示のときだけ（データを削らない）
+function normalizeOp(t){return stripOpLabel(t);}
 function opOverflow(t){return [...stripOpLabel(t)].length>OP_MAX;}
+// 文言チェック：抽出中に読んで意味が取れない文を、淹れる前に弾く
+function opRisks(t){
+  const raw=String(t||'').trim(), body=stripOpLabel(raw), r=[];
+  if(!body) r.push('本文が空');
+  if(stripOpLabel(body)!==body) r.push('ラベル剥がしが二重にかかる形（コロンが2つ）');
+  if(/[:：]/.test(body)&&!/[0-9０-９]{1,2}[:：][0-9０-９]{2}/.test(body)) r.push('本文にコロンが残っている');
+  if(/^[)）」』\]】]/.test(body)) r.push('閉じ括弧で始まっている＝文が欠けている');
+  if([...body].length>OP_MAX) r.push(`${OP_MAX}字を超える（末尾が切り捨てられる）`);
+  return r;
+}
 const COUNTDOWN_SEC=5;
 let pausedDuration=0,pausedAt=null,lastNotifiedStep=-1,timerRunning=false;
 let lastInteraction=0,autoScrollTimer=null;
@@ -821,11 +873,15 @@ function parseURLRecipe(){
       try{ raw=decodeURIComponent(parts[3]||''); }
       catch(e){ broken=true; raw=''; }                // 途中で切れた%エスケープ
       if(raw.indexOf('\uFFFD')>=0){broken=true;raw=raw.replace(/\uFFFD/g,'');}
-      let op=normalizeOp(raw);
-      if(!op) op=prevOp;                              // 空欄＝直前と同じ（URL短縮の仕様）
+      // 「-」＝文言を出さない、という明示。空欄は従来どおり直前を引き継ぐ（既存URLを壊さない）
+      let op = raw.trim()==='-' ? '' : normalizeOp(raw);
+      if(raw.trim()!=='-' && !op) op=prevOp;
       prevOp=op;
       parsedSteps.push({time:parseInt(parts[0])||0,duration:parseInt(parts[1])||30,
-        pour:parseInt(parts[2])||0,op,h:parts[4]?decodeURIComponent(parts[4]):''});
+        pour:parseInt(parts[2])||0,op,h:parts[4]?decodeURIComponent(parts[4]):'',
+        // 6番目=状態ラベル。スイッチの「浸漬／透過」のように、注湯量からは判定できない
+        // 器具の状態をレシピ側から明示するための欄（2026-08-27 ヤヌキ指定）
+        m:parts[5]?decodeURIComponent(parts[5]):''});
     });
     if(broken) setTimeout(()=>alert(
       'レシピURLが途中で切れています。ステップが欠けているか、説明が壊れている可能性があります。\n'
@@ -842,7 +898,7 @@ function generateRecipeURL(recipe,stepsArr){
   p.set('dripper',recipe.dripper);
   if(recipe.filter)p.set('filter',recipe.filter);
   if(recipe.target)p.set('target',recipe.target);
-  const stepsStr=stepsArr.map(s=>`${s.time},${s.duration},${s.pour},${encodeURIComponent(s.op)},${encodeURIComponent(s.h||'')}`).join('|');
+  const stepsStr=stepsArr.map(s=>`${s.time},${s.duration},${s.pour},${encodeURIComponent(s.op)},${encodeURIComponent(s.h||'')},${encodeURIComponent(s.m||'')}`).join('|');
   p.set('steps',stepsStr);
   return TIMER_BASE_URL+'?'+p.toString();
 }
@@ -932,7 +988,7 @@ function renderTimeline(){
       </div>
       <textarea class="se-op" rows="2" placeholder="オペレーション（例：中心から螺旋で全体を濡らす）"
         oninput="opHint(this)" onchange="updateStep(${i},'op',this.value)">${normalizeOp(s.op||'').replace(/</g,'&lt;')}</textarea>
-      <div class="se-hint">${[...normalizeOp(s.op||'')].length} / ${OP_MAX}</div>
+      <div class="se-hint">${[...drawOp(s.op||'')].length} / ${OP_MAX}</div>
       <div class="se-grid">
         <label>開始<input type="number" value="${s.time}" onchange="updateStep(${i},'time',this.value)"><span>秒</span></label>
         <label>長さ<input type="number" value="${s.duration||0}" onchange="updateStep(${i},'duration',this.value)"><span>秒</span></label>
@@ -964,8 +1020,12 @@ function opHint(el){
   if(a.length>OP_MAX){el.value=a.slice(0,OP_MAX).join('');a=[...el.value];}
   const n=a.length,h=el.parentElement.querySelector('.se-hint');
   if(!h)return;
-  h.textContent=`${n} / ${OP_MAX}`+(n>=OP_MAX?'（上限）':n>14?'　抽出画面では小さく表示されます':'');
-  h.classList.toggle('over',n>=OP_MAX);
+  // 文字数だけでなく「抽出中に読んで意味が取れるか」を見る（2026-08-27 追加）
+  const risks=opRisks(expandOp(el.value));
+  h.textContent= risks.length
+    ? `⚠️ ${risks[0]}`
+    : `${n} / ${OP_MAX}`+(n>=OP_MAX?'（上限）':n>14?'　抽出画面では小さく表示されます':'');
+  h.classList.toggle('over',n>=OP_MAX||risks.length>0);
 }
 function addStep(){const l=steps[steps.length-1];steps.push({time:l?l.time+(l.duration||30):0,duration:30,pour:0,op:"新しいステップ",h:"中"});renderTimeline();}
 function removeStep(i){steps.splice(i,1);renderTimeline();}
@@ -1046,7 +1106,7 @@ function drawHUD(){
   H('hudNo').textContent=`STEP ${i+1}/${steps.length}`;
   H('hudPrevBtn').disabled=(i<=0); H('hudNextBtn').disabled=(i>=steps.length-1&&!finished);
   H('hudEla').textContent=`${fmt(e)} / ${fmt(totalTime)}`;
-  const opEl=H('hudOp'),opTxt=normalizeOp(st.op||''),opN=[...opTxt].length;
+  const opEl=H('hudOp'),opTxt=drawOp(st.op||''),opN=[...opTxt].length;
   opEl.textContent=opTxt;
   opEl.classList.remove('op-m','op-s','op-xs');
   if(opN>22)      opEl.classList.add('op-xs');
@@ -1054,16 +1114,31 @@ function drawHUD(){
   else if(opN>8)  opEl.classList.add('op-m');
   hud.classList.toggle('longop',opN>14);
   const nx=steps[i+1];
-  H('hudNext').innerHTML= nx?`<b>次：</b>${normalizeOp(nx.op||'')}`:'<b>この後：</b>落とし切って完成';
+  // 次の予告：文言が無ければ状態で言う。どちらも無ければ行ごと出さない
+  const nxTxt = nx ? (drawOp(nx.op||'') || (nx.m||'')) : '';
+  const nxEl=H('hudNext');
+  nxEl.hidden=!nxTxt;
+  if(nxTxt) nxEl.innerHTML=`<span class="ar">↓</span><b>次：</b>${nxTxt}`;
   const lastCum=steps.reduce((a,x)=>a+x.pour,0);
-  H('hudGoal').textContent= pouring ? (st._cumMl||0) : lastCum;
-  H('hudSub').textContent= pouring
-    ? `このステップ +${st.pour}g / ${st.duration}秒`
-    : `注がずに待つ / ${st.duration}秒`;
-  H('hudRem').textContent=Math.ceil(rem);
-  // 水位はステップごとに 0→100%（注湯）／100→0%（待機・落ち切り）
+  // ⚠️ 2026-08-27: 待機中も lastCum(=全注湯の合計) を画面最大で出していた。
+  // その瞬間に従ってはいけない数字が主役になっており、事故と同じ構造だったので切り替える。
+  const stEl=H('hudState');
+  stEl.textContent=st.m||''; stEl.hidden=!st.m;
+  H('hudOp').hidden=!opTxt;
+  // 枠の中は3つまで：状態バッジ／やること／何g。
+  // 「+Xg そそぐ / Y秒」は上の数字と下の残り秒の重複、待機中の「注がない」は
+  // バッジの重複だったので撤去した（2026-08-27「情報が多すぎ」）。
+  H('hudGoalRow').hidden=!pouring;
+  if(pouring) H('hudGoal').textContent=st._cumMl||0;
+  H('hudSub').hidden=true;
+  // 枠は「複数をまとめる」ためのもの。中身が1つなら枠は要らない（2026-08-27 ヤヌキ）
+  const shown=(st.m?1:0)+(opTxt?1:0)+(pouring?1:0);
+  H('hudNow').classList.toggle('bare',shown<=1);
+
+  // 水位は常に 0→100%。満ちたらそのステップの終わり——注湯でも待機でも同じ意味にする
+  // （2026-08-27 ヤヌキ：残り秒の数字を消すため、ゲージの向きを揃えた）
   const prog=Math.max(0,Math.min(1,st.duration?into/st.duration:1));
-  H('hudFlood').style.height=(pouring?prog:(1-prog))*100+'%';
+  H('hudFlood').style.height=prog*100+'%';
   hud.classList.toggle('wait',!pouring);
   hud.classList.toggle('warn',rem<=3&&rem>0&&!finished);
   // 旧・簡易表示も維持
