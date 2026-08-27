@@ -13,30 +13,35 @@
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%231a1410' width='100' height='100' rx='20'/><text x='50' y='68' text-anchor='middle' font-size='55'>☕</text></svg>">
 <style>
   :root{
-    /* 参照UI（クリーム地・ベージュカード・深緑文字・コーラルCTA）を
-       ui-color-system スキルで検算して調整。2026-08-17 */
-    --bg:#FBF8F3;         /* クリーム地 */
-    --card:#F5E7D8;       /* ベージュのカード */
-    --card2:#EFDDCB;
-    --dark:#FBF8F3;       /* 入力欄は地と同じ明るさ */
-    --text:#14532D;       /* 深緑：本文 on 地 W8.60:1 Lc+86.6 */
-    --on-bg:#14532D;
-    --on-bg-2:#3E6B52;
-    --muted:#3E6B52;      /* 副次 on カード W5.05:1 Lc+67.5 */
-    --line:#E3D3C0;
-    --coral:#F16A5A;      /* 画像のコーラル。面・大きい数字・ボタン（16px/700以上） */
-    --coral-btn:#F16A5A;  /* ボタン：白字 W3.02:1 Lc-61.6（16px/700以上が条件） */
-    --coral-deep:#C05346; /* 小さい文字を載せる必要がある場合の濃色 */
-    --on-coral:#FFFFFF;
-    --coral-ink:#3A0F08;  /* コーラル面の上の大きい数字 Lc+45.4 */
+    /* ── 暗色テーマ（2026-08-28・ui-color-system で数値決定）─────────────
+       根拠：コーヒー器具4機種（Acaia Pearl Model S／Mahlkönig E80S GbW／
+       Fellow Aiden／Timemore Black Mirror）が実写で全て「黒地に白」。
+       ヤヌキの記録では109件中56件（51%）が18時以降の抽出。
+       スキルの暗地規約：純黒を地にしない／暗地では彩度を落とす／純白の本文を避ける。
+       全ての値は 4サーフェス（地・カード・card2・入力欄）に対して検算済み。 */
+    --bg:#1C1613;         /* 地   OKLCH L=0.206 C=0.011（純黒ではない） */
+    --card:#2A231E;       /* カード 地とのΔL=0.056 */
+    --card2:#342B25;      /* カードとのΔL=0.035 */
+    --dark:#241D19;       /* 入力欄 地とのΔL=0.031 */
+    --text:#F5EDE6;       /* 本文 最小11.95:1 Lc92.5（純白でなくC=0.013） */
+    --on-bg:#F5EDE6;
+    --on-bg-2:#E1D5CC;
+    --muted:#E1D5CC;      /* 副次 最小9.61:1 Lc77.9（本文の最小75を満たす） */
+    --line:#4A3E36;       /* 罫線 入力欄とのΔL=0.136 */
+    --coral:#F16A5A;      /* 面・ボタン。暗地に対し最小4.58:1 */
+    --coral-btn:#F16A5A;
+    --coral-text:#FF9383; /* 暗地の上に置く「文字」用 Lc55.9（#F16A5AはLc41で不足） */
+    --coral-deep:#C05346;
+    --on-coral:#1C1613;   /* コーラル面の上は暗字 5.92:1 Lc+46.4（白字は3.02:1で不足） */
+    --coral-ink:#1C1613;
     --accent:#F16A5A; --active:#F16A5A; --danger:#F16A5A;
-    --accent2:#E3D3C0; --teal:#14532D; --success:#14532D; --brand:#C05346;
-    --accent-ink:#FFFFFF;
-    /* HUD：この明るい世界に合わせる */
-    --hud-bg:#FBF8F3; --hud-ink:#14532D; --hud-sub:#3E6B52;
-    --hud-pour:#F5D9C8; --hud-pour-line:#F26B5B;
-    --hud-wait:#EFE9E0; --hud-wait-line:#C7BCAE;
-    --hud-warn:#F7C9BF; --hud-warn-line:#C05346;
+    --accent2:#4A3E36; --teal:#F5EDE6; --success:#F5EDE6; --brand:#FF9383;
+    --accent-ink:#1C1613;
+    /* HUD：この暗い世界に合わせる */
+    --hud-bg:#1C1613; --hud-ink:#F5EDE6; --hud-sub:#F5EDE6;
+    --hud-pour:#3B2A20; --hud-pour-line:#3B2A20;
+    --hud-wait:#2C2523; --hud-wait-line:#2C2523;
+    --hud-warn:#4E2A21; --hud-warn-line:#4E2A21;
   }
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Helvetica Neue','Hiragino Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;padding:16px;padding-top:env(safe-area-inset-top,16px);-webkit-user-select:none;user-select:none}
@@ -257,6 +262,8 @@
   .hud-goal-lbl{font-size:14px;font-weight:600;letter-spacing:.02em;color:var(--hud-sub);
     opacity:.75;margin-bottom:-2px}
   /* 注がないステップは「注がない」を主役にする。従ってはいけない数字を大きく出さない */
+  /* 淹れ終わりの一言。文言と同じ位置に、少し大きく、字間を開けて置く */
+  .hud-op.done-msg{font-size:clamp(46px,14vw,72px);letter-spacing:.12em;font-weight:800}
   .hud-nopour{font-size:clamp(40px,12vw,60px);font-weight:800;color:var(--hud-ink);line-height:1.1}
   /* .hud-goal は display:flex なので、UA の [hidden] では消えない */
   .hud-now [hidden]{display:none!important}
@@ -473,7 +480,7 @@
   .elapsed-time{color:var(--text)}
   /* HUD：明るい世界。水位はコーラルの淡色、数字は深緑 */
   .hud-op,.hud-goal{color:var(--text)}
-  .hud-goal .u,.hud-remain,.hud-next,.hud-top{color:var(--muted)}
+  .hud-goal .u,.hud-next,.hud-top{color:var(--muted)}
   .hud-cd .num{color:var(--coral-btn)}
   .hud-badge{background:var(--card);color:var(--text);border-color:var(--coral-btn)}
   .hud-bottom .btn{border-radius:999px}
@@ -507,6 +514,66 @@
   .hud-top{gap:6px}
   .hud-top .no{flex:0 0 auto}
   .hud-top #hudEla{flex:1 1 auto;text-align:right}
+
+  /* ── 抽出HUDは「黒地に白」（2026-08-28・ui-color-system で数値決定）────────
+     根拠1（実物）：Acaia Pearl Model S ／ Mahlkönig E80S GbW ／ Fellow Aiden ／
+       Timemore Black Mirror — 製品ページの実写で確認した4機種すべてが黒地に白。
+       色はアクセント1つだけか、使わない。
+     根拠2（実使用の証言）：「黒地にくっきりと浮かび上がるホワイト液晶は、
+       ライトの反射など厳しい条件下でも必要な情報を確実に表示してくれる」
+       「朝起きてすぐなど目がボーッとしている時でもはっきり見える」
+     根拠3（ヤヌキ自身の記録）：時刻の記録がある109件のうち56件（51%）が18時以降。
+       夜のキッチンで、画面全体をクリーム色に光らせる理由がない。
+
+     数値：文字 #F5EDE6 は 地/注湯/待機/警告 の4背景すべてに対し 最小10.82:1・Lc90.7。
+       明地版（#14532D on クリーム）の 6.10:1・Lc65.2 を大きく上回る。
+     スキルの暗地規約：純黒を地にしない（#1C1613 = OKLCH L=0.206 C=0.011）／
+       暗地では彩度を落とす／純白の本文を避ける（#F5EDE6 は C=0.013）。 */
+  .hud{
+    --hud-bg:#1C1613; --hud-ink:#F5EDE6; --hud-sub:#F5EDE6;
+    --hud-pour:#3B2A20;  /* 地とのΔL=0.096 */
+    --hud-wait:#2C2523;  /* 地とのΔL=0.065 */
+    --hud-warn:#4E2A21;  /* 地とのΔL=0.123 */
+  }
+  .hud .hud-top,.hud .hud-top .no,.hud .hud-nav,.hud .hud-op,.hud .hud-goal,
+  .hud .hud-state,.hud .hud-next,.hud .hud-next b,.hud .hud-goal .u{color:#F5EDE6}
+  .hud .hud-state{border-color:#F5EDE6}
+  .hud .hud-cd .lbl{color:#F5EDE6}
+  .hud .hud-cd .num{color:#F16A5A}
+  /* ボタン：境界は枠線で運ぶ（WCAG 1.4.11 = 3:1）。#F5EDE6 は最小10.82:1 */
+  .hud .hud-bottom .btn-muted{background:#B8ABA2;border:0;color:#1C1613}
+  /* 終了は唯一のアクセント。地#F16A5A は4背景に対し最小4.14:1、上の暗字は5.92:1 */
+  .hud .hud-bottom .btn-danger{background:#F16A5A;color:#1C1613;border:0}
+
+  /* ── タブ：フラット。選択中はコーラル面（2026-08-28）───────────────
+     旧版は .tab-btn.active の上書きが4層積まれ、最後の
+     「background:var(--card); color:var(--accent)」が勝っていたため、
+     選択中と非選択がほぼ同じ見た目になっていた。 */
+  .tab-bar{border:0}
+  .tab-btn{background:var(--card);color:var(--muted);font-weight:600;border-radius:0}
+  .tab-btn.active{background:var(--coral);color:var(--on-coral);font-weight:700}
+
+  /* ── 暗色化で取り残された旧テーマの色（2026-08-28・全画面走査で発見）──────
+     ① .cva-pref-btn は色指定が無く、ボタン既定の黒を継いでいた（暗地に黒＝1.17:1）
+     ② .se-no は明地用の濃いコーラル #C05346 のままだった（3.89:1・要4.5） */
+  .cva-pref-btn{color:var(--text)}
+  .se-no{color:var(--coral-text)}
+
+  /* ── 状態クラスに残っていた旧テーマ（2026-08-28）─────────────────────
+     .selected / .sel / .open は「その状態にしないと現れない」ため、
+     通常の画面走査では見つからなかった。--text が暗色化で明るくなった結果、
+     「明るい面＋明るい文字」になり、選ぶと文字が消える状態だった。
+     選択中は一律コーラル面＋暗字（4.58:1 / 5.92:1）に統一する。 */
+  .flavor-tag.selected,.cf-b.sel,.fcat.open .fcat-head,
+  .aim-btn.sel,.foam-btn.sel{background:var(--coral);color:var(--on-coral);border-color:var(--coral)}
+  .fcat.open .fcat-en{color:var(--on-coral);opacity:.72}
+  /* 副次ボタンは面で境界を作る（#B8ABA2 は暗いサーフェス群に対し最小5.60:1） */
+  .btn-muted,.btn-qr{background:#B8ABA2;color:#1C1613;border:0}
+  .btn-accent{background:var(--coral);color:var(--on-coral);border:0}
+  .btn-danger{background:var(--coral);color:var(--on-coral);border:0}
+  .subtitle,.export-hint,.brew-empty{color:var(--muted)}
+  .qr-note.warn{color:var(--coral-text)}
+
 </style>
 </head>
 <body>
@@ -1104,7 +1171,7 @@ function drawHUD(){
   const e=Math.min(elapsed,totalTime), i=Math.max(0,curIdx(e)), st=steps[i];
   const into=e-st.time, rem=Math.max(0,st.time+st.duration-e), pouring=st.pour>0;
   H('hudNo').textContent=`STEP ${i+1}/${steps.length}`;
-  H('hudPrevBtn').disabled=(i<=0); H('hudNextBtn').disabled=(i>=steps.length-1&&!finished);
+  H('hudPrevBtn').disabled=(i<=0); H('hudNextBtn').disabled=finished;
   H('hudEla').textContent=`${fmt(e)} / ${fmt(totalTime)}`;
   const opEl=H('hudOp'),opTxt=drawOp(st.op||''),opN=[...opTxt].length;
   opEl.textContent=opTxt;
@@ -1134,6 +1201,16 @@ function drawHUD(){
   // 枠は「複数をまとめる」ためのもの。中身が1つなら枠は要らない（2026-08-27 ヤヌキ）
   const shown=(st.m?1:0)+(opTxt?1:0)+(pouring?1:0);
   H('hudNow').classList.toggle('bare',shown<=1);
+  // 淹れ終わり。最後のステップの指示を出したままにせず、終わったことだけを言う
+  // （2026-08-28 ヤヌキ指定）。ここで他の要素は全部おろす。
+  if(finished){
+    stEl.hidden=true; H('hudGoalRow').hidden=true; nxEl.hidden=true;
+    opEl.hidden=false; opEl.textContent='ENJOY!';
+    opEl.classList.remove('op-m','op-s','op-xs');
+    hud.classList.remove('longop');
+    H('hudNow').classList.add('bare');
+  }
+  opEl.classList.toggle('done-msg',finished);
 
   // 水位は常に 0→100%。満ちたらそのステップの終わり——注湯でも待機でも同じ意味にする
   // （2026-08-27 ヤヌキ：残り秒の数字を消すため、ゲージの向きを揃えた）
@@ -1146,12 +1223,25 @@ function drawHUD(){
   const pb=H('progressBar'); if(pb)pb.style.width=Math.min(100,e/totalTime*100)+'%';
 }
 
-function openHud(){document.getElementById('hud').classList.add('on');}
+function openHud(){
+  document.getElementById('hud').classList.add('on');
+  if(steps.length)drawHUD();   // 開いた瞬間に必ず描く。0g のまま出さない
+}
 // 手動でステップを移動する。時計そのものをそのステップの開始時刻へ動かすので、
 // 表示・水位・音の判定がすべて一致したまま進む／戻る。
 function jumpStep(d){
   if(!steps.length||!brewStartTime)return;
   const i=curIdx(calcElapsed());
+  // 最後のステップから▶を押したら「淹れ終わり」へ送る。
+  // これが無いと手送りでは ENJOY! に到達できない（2026-08-28 ヤヌキ報告）。
+  if(d>0 && i>=steps.length-1 && !finished){
+    const now0=isPaused?pausedAt:Date.now();
+    brewStartTime=now0-totalTime*1000-pausedDuration;
+    elapsed=totalTime; finished=true; timerRunning=false;
+    clearInterval(timerInterval);
+    document.getElementById('hud').classList.add('done');
+    cueEnd(); clearSession(); flashScreen(160); drawHUD(); return;
+  }
   const j=Math.max(0,Math.min(steps.length-1,i+d));
   if(j===i&&!finished)return;
   const target=steps[j].time;
@@ -1227,6 +1317,10 @@ function restoreSession(){
   const age=(Date.now()-d.brewStartTime)/1000;
   if(age>(d.totalTime||0)+1800){clearSession();return false;}   // 抽出後30分以上たっていたら破棄
   steps=d.steps;totalTime=d.totalTime;lastBrewRecipe=d.lastBrewRecipe;
+  // 復元は prepareBrew() を通らないので、そこで作られる派生値は入っていない。
+  // 累積gが欠けたまま描画すると、画面最大の数字が 0g になる（2026-08-28 ヤヌキ報告の正体）。
+  // 派生値は保存に頼らず、復元のたびに作り直す。
+  {let cum=0;steps.forEach(x=>{cum+=(x.pour||0);x._cumMl=cum;});}
   brewStartTime=d.brewStartTime;pausedDuration=d.pausedDuration||0;
   pausedAt=d.pausedAt||null;isPaused=!!d.isPaused;
   document.getElementById('brewEmpty').style.display='none';
@@ -1482,7 +1576,8 @@ async function showQR(){
   // データ量に応じてキャンバスを大きくする（密度不足でスキャンできないのを防ぐ）
   const size = bytes>1200 ? 340 : bytes>700 ? 280 : 220;
   try{
-    new QRious({element:canvas,value:url,size,level:'M',background:'#ffffff',foreground:'#14532D'});
+    // 新パレット内で描く。暗字#1C1613 on 明地#F5EDE6 = 11.95:1（QRの読取に十分）
+    new QRious({element:canvas,value:url,size,level:'M',background:'#F5EDE6',foreground:'#1C1613'});
   }catch(e){
     note.className='qr-note err';
     note.textContent='QRの生成に失敗しました。下の「URLをコピー」を使ってください。';
