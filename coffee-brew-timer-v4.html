@@ -927,7 +927,8 @@ function parseURLRecipe(){
     grind:parseInt(p.get('grind'))||16,temp:parseInt(p.get('temp'))||90,
     dripper:p.get('dripper')||'V60 02',
     filter:p.get('filter')||'',
-    target:p.get('target')||''
+    target:p.get('target')||'',
+    flavor:p.get('flavor')||''   // カードのフレーバー（カンマ区切り）。2026-09-07 追加：毎回手入力していた穴を塞ぐ
   };
   const stepsStr=p.get('steps')||'';
   const parsedSteps=[];
@@ -965,6 +966,8 @@ function generateRecipeURL(recipe,stepsArr){
   p.set('dripper',recipe.dripper);
   if(recipe.filter)p.set('filter',recipe.filter);
   if(recipe.target)p.set('target',recipe.target);
+  const fl=(document.getElementById('cardFlavorSrc')||{}).value||'';
+  if(fl)p.set('flavor',fl);
   const stepsStr=stepsArr.map(s=>`${s.time},${s.duration},${s.pour},${encodeURIComponent(s.op)},${encodeURIComponent(s.h||'')},${encodeURIComponent(s.m||'')}`).join('|');
   p.set('steps',stepsStr);
   return TIMER_BASE_URL+'?'+p.toString();
@@ -984,6 +987,7 @@ function loadFromURL(data){
   if(r.filter){const fSel=document.getElementById('filter');const opts=[...fSel.options].map(o=>o.value);if(!opts.includes(r.filter)){const o=document.createElement('option');o.value=r.filter;o.textContent=r.filter;fSel.appendChild(o);}fSel.value=r.filter;}else{autoSelectFilter();}
   steps=data.steps.length?data.steps:presets[0].steps;
   renderTimeline();updateRatio();
+  if(r.flavor){document.getElementById('cardFlavorSrc').value=r.flavor;}
   if(r.target){document.getElementById('targetTime').value=r.target;document.getElementById('targetTime').style.color='var(--accent)';document.getElementById('targetTime').style.fontWeight='600';}
   const targetStr=r.target?` / 目標${r.target}`:'';
   document.getElementById('bannerBean').textContent=`${r.bean} — ${r.weight}g / ${r.water}g / C2 ${r.grind}cl / ${r.temp}℃${targetStr}`;
