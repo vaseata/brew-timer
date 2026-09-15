@@ -39,9 +39,9 @@
     --accent-ink:#1C1613;
     /* HUD：この暗い世界に合わせる */
     --hud-bg:#1C1613; --hud-ink:#F5EDE6; --hud-sub:#F5EDE6;
-    --hud-pour:#3B2A20; --hud-pour-line:#3B2A20;
-    --hud-wait:#2C2523; --hud-wait-line:#2C2523;
-    --hud-warn:#4E2A21; --hud-warn-line:#4E2A21;
+    --hud-pour:#862724; --hud-pour-line:#862724;
+    --hud-wait:#6B1E1C; --hud-wait-line:#6B1E1C;
+    --hud-warn:#A03F3A; --hud-warn-line:#A03F3A;
   }
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Helvetica Neue','Hiragino Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;padding:16px;padding-top:env(safe-area-inset-top,16px);-webkit-user-select:none;user-select:none}
@@ -531,9 +531,12 @@
        暗地では彩度を落とす／純白の本文を避ける（#F5EDE6 は C=0.013）。 */
   .hud{
     --hud-bg:#1C1613; --hud-ink:#F5EDE6; --hud-sub:#F5EDE6;
-    --hud-pour:#3B2A20;  /* 地とのΔL=0.096 */
-    --hud-wait:#2C2523;  /* 地とのΔL=0.065 */
-    --hud-warn:#4E2A21;  /* 地とのΔL=0.123 */
+    /* 2026-09-15 ヤヌキ指摘「ゲージの色と背景の黒のトーンが近く視認性が悪い」→ id128 抽出液写真の
+       ルビー（OKLCH H≈21〜33・#2D0706/#51160B）から H=26 を取り、L を上げて地から離した。
+       文字 #F5EDE6 は3色とも WCAG≥5.5 / |Lc|≥75。地とのΔL は 0.15〜0.29（旧 0.065〜0.123）。 */
+    --hud-pour:#862724;  /* OKLCH 0.42/0.13/26 地とのΔL=0.214 */
+    --hud-wait:#6B1E1C;  /* OKLCH 0.36/0.11/26 地とのΔL=0.154 */
+    --hud-warn:#A03F3A;  /* OKLCH 0.50/0.13/26 地とのΔL=0.294 */
   }
   .hud .hud-top,.hud .hud-top .no,.hud .hud-nav,.hud .hud-op,.hud .hud-goal,
   .hud .hud-state,.hud .hud-next,.hud .hud-next b,.hud .hud-goal .u{color:#F5EDE6}
@@ -863,7 +866,7 @@ const textureCategories={
  rough:{ja:"ざらつく",en:"Rough",tags:["ザラつき","硬い","角がある"]},
  drying:{ja:"口が渇く",en:"Mouth-Drying",tags:["渋み","ドライ"]},
  metallic:{ja:"金属的",en:"Metallic",tags:["金属的"]},
- house:{ja:"この家の語彙",en:"House",tags:["サラサラ","優しい","軽い"]}
+ house:{ja:"その他の口当たり",en:"Other",tags:["サラサラ","優しい","軽い"]}   // SCAの5分類に入らないヤヌキの言葉。旧ラベル「この家の語彙/House」は意味不明とのFB（2026-09-08）
 };
 
 let steps=[],timerInterval=null,elapsed=0,isPaused=false,totalTime=0,audioCtx=null,lastBrewRecipe=null,urlLoaded=false,brewStartTime=null;
@@ -1148,7 +1151,12 @@ function startBrew(){prepareBrew();switchTab('brew');}
 function renderRecipeSummary(){const r=lastBrewRecipe;document.getElementById('recipeSummary').innerHTML=[{i:'☕',v:r.bean,l:'豆'},{i:'📎',v:r.dripper,l:'ドリッパー'},{i:'📄',v:r.filter||'-',l:'フィルター'},{i:'⚖️',v:r.ratio||'',l:'レシオ'},{i:'🫘',v:r.weight+'g',l:'豆量'},{i:'🔧',v:r.grind+'cl',l:'C2'},{i:'💧',v:r.water+'g',l:'湯量'},{i:'🌡️',v:r.temp+'℃',l:'湯温'},{i:'⏱',v:r.target_time,l:'目標時間'}].map(x=>`<div class="item"><div class="icon">${x.i}</div><div class="val">${x.v}</div><div class="lbl">${x.l}</div></div>`).join('');}
 function renderStepCards(){}
 function curIdx(e){let i=-1;steps.forEach((st,k)=>{if(e>=st.time&&e<st.time+st.duration)i=k;});
-  if(i<0&&e>=totalTime)i=steps.length-1; if(i<0&&steps.length)i=0; return i;}
+  if(i<0&&e>=totalTime)i=steps.length-1;
+  // 2026-09-15: ステップ間に空白（前の step の time+duration < 次の time）があるとき、
+  // 以前は i=0 に落として STEP1 を表示していた（id128 で各投の後に約30秒 STEP1 に戻る事故）。
+  // 空白では「最後に始まった step」に留まる（待機中扱い）。
+  if(i<0)steps.forEach((st,k)=>{if(e>=st.time)i=k;});
+  if(i<0&&steps.length)i=0; return i;}
 
 function tick(){
   if(isPaused)return;
@@ -1216,10 +1224,12 @@ function drawHUD(){
   }
   opEl.classList.toggle('done-msg',finished);
 
-  // 水位は常に 0→100%。満ちたらそのステップの終わり——注湯でも待機でも同じ意味にする
-  // （2026-08-27 ヤヌキ：残り秒の数字を消すため、ゲージの向きを揃えた）
+  // 注湯ステップ：水位 0→100%（満ちたら終わり）。
+  // 注がないステップ（落とし切る・待つ）：水位 100→0%（下がり切ったら終わり）。
+  // 2026-08-27 は両方 0→100% に揃えていたが、2026-09-15 ヤヌキ：
+  // 「落とし切るステップではゲージが上から下へ下がる挙動の方が違和感がない」で戻した。
   const prog=Math.max(0,Math.min(1,st.duration?into/st.duration:1));
-  H('hudFlood').style.height=prog*100+'%';
+  H('hudFlood').style.height=(pouring?prog:1-prog)*100+'%';
   hud.classList.toggle('wait',!pouring);
   hud.classList.toggle('warn',rem<=3&&rem>0&&!finished);
   // 旧・簡易表示も維持
