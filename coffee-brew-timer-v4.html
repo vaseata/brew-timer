@@ -664,6 +664,8 @@
             <select id="dripper" onchange="autoSelectFilter()"><option value="V60 01">V60 01</option><option value="V60 02" selected>V60 02</option><option value="V60 NEO 01">V60 NEO 01</option><option value="V60 NEO 02">V60 NEO 02</option><option value="V60 MUGEN">V60 MUGEN</option><option value="Kalita 155">Kalita 155</option><option value="KONO 名門 MDK-21">KONO 名門ドリッパー MDK-21</option><option value="スイッチ">スイッチ</option><option value="ネルドリップ">ネルドリップ</option></select></div>
           <div class="form-group"><label>フィルター</label>
             <select id="filter"><option value="" selected>（未選択・記録時に確認）</option><option value="HARIO V60ペーパー 白 1-2杯">HARIO V60ペーパー 白 1-2杯</option><option value="HARIO V60ペーパー 白 2-4杯">HARIO V60ペーパー 白 2-4杯</option><option value="CAFEC アバカ 円錐 1-2杯">CAFEC アバカ 円錐 1-2杯</option><option value="CAFEC アバカ 円錐 2-4杯">CAFEC アバカ 円錐 2-4杯</option><option value="KONO 円すいペーパー MD-25">KONO 円すいペーパー MD-25</option><option value="カリタ ウェーブ 155">カリタ ウェーブ 155</option><option value="ネルフィルター">ネルフィルター</option></select></div>
+          <div class="form-group"><label>ドリップアシスト</label>
+            <select id="dripAssist"><option value="" selected>なし</option><option value="1">あり（A＝内周の3つ穴／B＝外周の小穴）</option></select></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>レシオ</label><input type="text" id="ratio" value="1:15" readonly style="color:var(--muted)"></div>
@@ -931,6 +933,7 @@ function parseURLRecipe(){
     dripper:p.get('dripper')||'V60 02',
     filter:p.get('filter')||'',
     target:p.get('target')||'',
+    da:p.get('da')==='1',   // ドリップアシスト あり/なし（2026-09-19 追加：操作文言の A/B を省略して書ける）
     flavor:p.get('flavor')||''   // カードのフレーバー（カンマ区切り）。2026-09-07 追加：毎回手入力していた穴を塞ぐ
   };
   const stepsStr=p.get('steps')||'';
@@ -969,6 +972,7 @@ function generateRecipeURL(recipe,stepsArr){
   p.set('dripper',recipe.dripper);
   if(recipe.filter)p.set('filter',recipe.filter);
   if(recipe.target)p.set('target',recipe.target);
+  if(recipe.da)p.set('da','1');
   const fl=(document.getElementById('cardFlavorSrc')||{}).value||'';
   if(fl)p.set('flavor',fl);
   const stepsStr=stepsArr.map(s=>`${s.time},${s.duration},${s.pour},${encodeURIComponent(s.op)},${encodeURIComponent(s.h||'')},${encodeURIComponent(s.m||'')}`).join('|');
@@ -990,6 +994,7 @@ function loadFromURL(data){
   if(r.filter){const fSel=document.getElementById('filter');const opts=[...fSel.options].map(o=>o.value);if(!opts.includes(r.filter)){const o=document.createElement('option');o.value=r.filter;o.textContent=r.filter;fSel.appendChild(o);}fSel.value=r.filter;}else{autoSelectFilter();}
   steps=data.steps.length?data.steps:presets[0].steps;
   renderTimeline();updateRatio();
+  document.getElementById('dripAssist').value=r.da?'1':'';
   if(r.flavor){document.getElementById('cardFlavorSrc').value=r.flavor;}
   if(r.target){document.getElementById('targetTime').value=r.target;document.getElementById('targetTime').style.color='var(--accent)';document.getElementById('targetTime').style.fontWeight='600';}
   const targetStr=r.target?` / 目標${r.target}`:'';
@@ -1134,7 +1139,7 @@ function prepareBrew(){
   totalTime=steps.reduce((s,st)=>Math.max(s,st.time+st.duration),0);
   // Compute cumulative ml for each step
   let cum=0;steps.forEach(s=>{cum+=s.pour;s._cumMl=cum;});
-  lastBrewRecipe={bean:document.getElementById('beanName').value,roast:document.getElementById('roastLevel').value,weight:document.getElementById('beanWeight').value,water:document.getElementById('totalWater').value,ratio:document.getElementById('ratio').value,grind:document.getElementById('grindClicks').value,temp:document.getElementById('waterTemp').value,dripper:document.getElementById('dripper').value,filter:document.getElementById('filter').value,target_time:fmt(totalTime),
+  lastBrewRecipe={bean:document.getElementById('beanName').value,roast:document.getElementById('roastLevel').value,weight:document.getElementById('beanWeight').value,water:document.getElementById('totalWater').value,ratio:document.getElementById('ratio').value,grind:document.getElementById('grindClicks').value,temp:document.getElementById('waterTemp').value,dripper:document.getElementById('dripper').value,filter:document.getElementById('filter').value,da:document.getElementById('dripAssist').value==='1',target_time:fmt(totalTime),
     kettle:'',card_flavors:document.getElementById('cardFlavorSrc').value||''};
   document.getElementById('fbActualTime').placeholder=fmt(totalTime)+'（提案）';
   document.getElementById('fbActualTemp').placeholder=document.getElementById('waterTemp').value+'℃（提案）';
@@ -1148,7 +1153,7 @@ function prepareBrew(){
 }
 // レシピタブのボタンから：組み立てて抽出タブへ移動するだけ
 function startBrew(){prepareBrew();switchTab('brew');}
-function renderRecipeSummary(){const r=lastBrewRecipe;document.getElementById('recipeSummary').innerHTML=[{i:'☕',v:r.bean,l:'豆'},{i:'📎',v:r.dripper,l:'ドリッパー'},{i:'📄',v:r.filter||'-',l:'フィルター'},{i:'⚖️',v:r.ratio||'',l:'レシオ'},{i:'🫘',v:r.weight+'g',l:'豆量'},{i:'🔧',v:r.grind+'cl',l:'C2'},{i:'💧',v:r.water+'g',l:'湯量'},{i:'🌡️',v:r.temp+'℃',l:'湯温'},{i:'⏱',v:r.target_time,l:'目標時間'}].map(x=>`<div class="item"><div class="icon">${x.i}</div><div class="val">${x.v}</div><div class="lbl">${x.l}</div></div>`).join('');}
+function renderRecipeSummary(){const r=lastBrewRecipe;document.getElementById('recipeSummary').innerHTML=[{i:'☕',v:r.bean,l:'豆'},{i:'📎',v:r.dripper+(r.da?' ＋ドリップアシスト':''),l:'ドリッパー'},{i:'📄',v:r.filter||'-',l:'フィルター'},{i:'⚖️',v:r.ratio||'',l:'レシオ'},{i:'🫘',v:r.weight+'g',l:'豆量'},{i:'🔧',v:r.grind+'cl',l:'C2'},{i:'💧',v:r.water+'g',l:'湯量'},{i:'🌡️',v:r.temp+'℃',l:'湯温'},{i:'⏱',v:r.target_time,l:'目標時間'}].map(x=>`<div class="item"><div class="icon">${x.i}</div><div class="val">${x.v}</div><div class="lbl">${x.l}</div></div>`).join('');}
 function renderStepCards(){}
 function curIdx(e){let i=-1;steps.forEach((st,k)=>{if(e>=st.time&&e<st.time+st.duration)i=k;});
   if(i<0&&e>=totalTime)i=steps.length-1;
@@ -1429,7 +1434,7 @@ function gatherFeedback(){const se={};sensoryItems.forEach((item,i)=>{const _sl=
     kettle:document.getElementById('fbKettle').value||'',
     beverage_weight_g:parseFloat(document.getElementById('fbBeverage').value)||null,
     card_flavors:gatherCardFlavors(),overallMemo:document.getElementById('fbOverallMemo').value||'',flavors:fl,flavor_categories:flavorCats,main_tastes:tasteObj.map(x=>x.ja),textures:tx,next_request:document.getElementById('fbNextRequest').value,challenge:document.getElementById('fbChallenge').value==='yes'};}
-function buildFeedbackText(){const fb=gatherFeedback();const prefMap={good:'😊',ok:'😐',bad:'😞','':''};let t=`☕ 抽出フィードバック\n日時: ${fb.date} ${fb.time}\n`;if(fb.recipe)t+=`豆: ${fb.recipe.bean||''} / ${fb.recipe.weight||''}g / ${fb.recipe.water||''}g / C2 ${fb.recipe.grind||''}cl / ${fb.recipe.temp||''}℃ / ${fb.recipe.dripper||''} / ${fb.recipe.filter||''}\n`;t+=`\n【🎯狙い】${fb.aim||'未記入'}${fb.aim_memo?' — '+fb.aim_memo:''}\n`;
+function buildFeedbackText(){const fb=gatherFeedback();const prefMap={good:'😊',ok:'😐',bad:'😞','':''};let t=`☕ 抽出フィードバック\n日時: ${fb.date} ${fb.time}\n`;if(fb.recipe)t+=`豆: ${fb.recipe.bean||''} / ${fb.recipe.weight||''}g / ${fb.recipe.water||''}g / C2 ${fb.recipe.grind||''}cl / ${fb.recipe.temp||''}℃ / ${fb.recipe.dripper||''}${fb.recipe.da?' ＋ドリップアシスト':''} / ${fb.recipe.filter||''}\n`;t+=`\n【🎯狙い】${fb.aim||'未記入'}${fb.aim_memo?' — '+fb.aim_memo:''}\n`;
   // 値の出所を必ず明示する（原則14）。未入力なら提案値を括弧で添える
   // 提案値はレシピの実データから引く（placeholderは例示が混じるため信用しない・原則14）
   const _sugTime=(typeof totalTime==='number'&&totalTime>0)?fmt(totalTime):'';
@@ -1559,7 +1564,8 @@ function getCurrentRecipeURL(){
     grind:parseInt(document.getElementById('grindClicks').value)||16,
     temp:parseInt(document.getElementById('waterTemp').value)||90,
     dripper:document.getElementById('dripper').value,
-    filter:document.getElementById('filter').value
+    filter:document.getElementById('filter').value,
+    da:document.getElementById('dripAssist').value==='1'
   };
   return generateRecipeURL(recipe,steps);
 }
