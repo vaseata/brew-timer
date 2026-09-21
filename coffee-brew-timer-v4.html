@@ -757,8 +757,6 @@
       <div class="form-group" style="margin-top:6px"><input type="text" id="fbOverallMemo" placeholder="総合メモ（例：バランスが良い、もう少し甘さが欲しい）" style="font-size:0.78rem"></div>
     </div>
     <div class="section">
-      <div class="section-title">👅 基本の味（際立ったものだけ・最大2）</div>
-      <div id="mainTastes" style="margin-bottom:16px"></div>
       <div class="section-title">🍫 カードのフレーバーは出たか</div>
       <div id="cardFlavors" style="margin-bottom:12px"></div>
       <div class="section-title" style="font-size:.78rem">その他に感じたもの</div>
@@ -841,7 +839,7 @@ const flavorCategories={
    {ja:"ナッツ",tags:[{ja:"ナッツ",en:"Nutty"},{ja:"アーモンド",en:"Almond"},{ja:"ヘーゼルナッツ",en:"Hazelnut"},
      {ja:"ピーナッツ",en:"Peanut"},{ja:"カシューナッツ",en:"Cashew"}]},
    {ja:"カカオ",tags:[{ja:"チョコレート",en:"Chocolate"},{ja:"ダークチョコ",en:"Dark Chocolate"},{ja:"ココア",en:"Cocoa"},{ja:"カカオニブ",en:"Cacao Nibs"}]}]},
- sweet:{ja:"甘い香り",en:"Sweet (aroma)",emoji:"🍯",note:"※味の甘味は「基本の味」で選ぶ",groups:[
+ sweet:{ja:"甘い香り",en:"Sweet (aroma)",emoji:"🍯",groups:[
    {ja:"ブラウンシュガー系",tags:[{ja:"黒糖",en:"Brown Sugar"},{ja:"糖蜜",en:"Molasses"},{ja:"メープル",en:"Maple"},
      {ja:"はちみつ",en:"Honey"},{ja:"キャラメル",en:"Caramelized"},{ja:"上白糖",en:"White Sugar"}]},
    {ja:"バニラ",tags:[{ja:"バニラ",en:"Vanilla"}]},
@@ -859,8 +857,6 @@ const flavorCategories={
    {ja:"木質",tags:[{ja:"木質",en:"Woody"},{ja:"枯れた",en:"Stale"}]},
    {ja:"ノイズ",tags:[{ja:"雑味",en:"Off-note"},{ja:"エグ味",en:"Harsh"}]}]}
 };
-// 基本の味（SCA-103 §5.2）— 最大2個
-const mainTastes=[{ja:"甘味",en:"Sweet"},{ja:"酸味",en:"Sour"},{ja:"苦味",en:"Bitter"},{ja:"塩味",en:"Salty"},{ja:"うま味",en:"Umami"}];
 // テクスチャー（SCA-103 §5.3 の5分類＋この家の語彙）
 const textureCategories={
  smooth:{ja:"なめらか",en:"Smooth",tags:["とろみ","シルキー","蜜のよう","クリーミー","まろやか・丸い","キメ細やか","コーティング","ジューシー"]},
@@ -1393,9 +1389,6 @@ function acc(box,key,c,kind){
 function renderFlavorTags(){
   const fb=document.getElementById('flavorTags');fb.innerHTML='';
   Object.entries(flavorCategories).forEach(([k,c])=>acc(fb,k,c,'flavor'));
-  const mt=document.getElementById('mainTastes');
-  if(mt){mt.innerHTML='';const r=document.createElement('div');r.className='flavor-tags';
-    mainTastes.forEach(t=>r.appendChild(mkTag(t,'基本の味','taste')));mt.appendChild(r);}
   const tb=document.getElementById('textureTags');tb.innerHTML='';
   Object.entries(textureCategories).forEach(([k,c])=>acc(tb,k,c,'texture'));
 }
@@ -1426,14 +1419,14 @@ function gatherCardFlavors(){
 }
 function gatherFeedback(){const se={};sensoryItems.forEach((item,i)=>{const _sl=document.getElementById(`cva-${i}`);const intensity=_sl.dataset.touched==='1'?parseInt(_sl.value):null;const prefBtn=document.querySelector(`[data-pref="${i}"].sel-good,[data-pref="${i}"].sel-ok,[data-pref="${i}"].sel-bad`);const pref=prefBtn?prefBtn.dataset.pv:'';const comment=document.getElementById(`cvaC-${i}`)?.value||'';se[item.key]={label:item.label,intensity,pref,comment};});const pick=k=>[...document.querySelectorAll(`.flavor-tag.selected[data-kind="${k}"]`)]
     .map(t=>({ja:t.textContent,en:t.dataset.en||'',cat:t.dataset.cat||''}));
-  const flObj=pick('flavor'),tasteObj=pick('taste'),txObj=pick('texture');
+  const flObj=pick('flavor'),txObj=pick('texture');
   const fl=flObj.map(x=>x.ja);
   const flavorCats=[...new Set(flObj.map(x=>x.cat))];const o=document.getElementById('fbFlavorOther').value;if(o)fl.push(o);const tx=txObj.map(x=>x.ja);const txo=document.getElementById('fbTextureOther').value;if(txo)tx.push(txo);const _n=new Date();const _p=x=>String(x).padStart(2,'0');return{date:`${_n.getFullYear()}-${_p(_n.getMonth()+1)}-${_p(_n.getDate())}`,time:_n.toTimeString().slice(0,5),recipe:lastBrewRecipe||{bean:document.getElementById('beanName').value},actual:{time:document.getElementById('fbActualTime').value,temp:document.getElementById('fbActualTemp').value,notes:document.getElementById('fbNotes').value},sensory:se,overall:document.getElementById('fbOverall').dataset.touched==='1'?parseInt(document.getElementById('fbOverall').value):null,
     aim:selAim,aim_memo:document.getElementById('fbAimMemo').value||'',
     foam_white_level:selFoam,
     kettle:document.getElementById('fbKettle').value||'',
     beverage_weight_g:parseFloat(document.getElementById('fbBeverage').value)||null,
-    card_flavors:gatherCardFlavors(),overallMemo:document.getElementById('fbOverallMemo').value||'',flavors:fl,flavor_categories:flavorCats,main_tastes:tasteObj.map(x=>x.ja),textures:tx,next_request:document.getElementById('fbNextRequest').value,challenge:document.getElementById('fbChallenge').value==='yes'};}
+    card_flavors:gatherCardFlavors(),overallMemo:document.getElementById('fbOverallMemo').value||'',flavors:fl,flavor_categories:flavorCats,textures:tx,next_request:document.getElementById('fbNextRequest').value,challenge:document.getElementById('fbChallenge').value==='yes'};}
 function buildFeedbackText(){const fb=gatherFeedback();const prefMap={good:'😊',ok:'😐',bad:'😞','':''};let t=`☕ 抽出フィードバック\n日時: ${fb.date} ${fb.time}\n`;if(fb.recipe)t+=`豆: ${fb.recipe.bean||''} / ${fb.recipe.weight||''}g / ${fb.recipe.water||''}g / C2 ${fb.recipe.grind||''}cl / ${fb.recipe.temp||''}℃ / ${fb.recipe.dripper||''}${fb.recipe.da?' ＋ドリップアシスト':''} / ${fb.recipe.filter||''}\n`;t+=`\n【🎯狙い】${fb.aim||'未記入'}${fb.aim_memo?' — '+fb.aim_memo:''}\n`;
   // 値の出所を必ず明示する（原則14）。未入力なら提案値を括弧で添える
   // 提案値はレシピの実データから引く（placeholderは例示が混じるため信用しない・原則14）
@@ -1446,7 +1439,7 @@ function buildFeedbackText(){const fb=gatherFeedback();const prefMap={good:'😊
   if(fb.card_flavors&&fb.card_flavors.length)t+=`【カード照合】${fb.card_flavors.map(c=>c.name+':'+c.felt).join(' / ')}\n`;
   const _se=sensoryItems.map(item=>fb.sensory[item.key]).filter(x=>x&&x.intensity!=null);
   if(_se.length){t+=`\n【官能評価（CVA）】強さ/10 + 好み\n`;_se.forEach(s=>{t+=`${s.label}: ${s.intensity}/10 ${prefMap[s.pref]||''} ${s.comment?'('+s.comment+')':''}\n`;});}
-  t+=`総合:${fb.overall!=null?fb.overall+'/10':'未記入'}${fb.overallMemo?' ('+fb.overallMemo+')':''}\n【基本の味】${(fb.main_tastes||[]).join(',')||'—'}\n【フレーバー】${fb.flavors.join(',')}${fb.flavor_categories&&fb.flavor_categories.length?' （分類: '+fb.flavor_categories.join('/')+'）':''}\n【テクスチャー】${fb.textures.join(',')}\n【次回】${fb.next_request}`;if(fb.challenge)t+='\n→チャレンジしたい！';return t;}
+  t+=`総合:${fb.overall!=null?fb.overall+'/10':'未記入'}${fb.overallMemo?' ('+fb.overallMemo+')':''}\n【フレーバー】${fb.flavors.join(',')}${fb.flavor_categories&&fb.flavor_categories.length?' （分類: '+fb.flavor_categories.join('/')+'）':''}\n【テクスチャー】${fb.textures.join(',')}\n【次回】${fb.next_request}`;if(fb.challenge)t+='\n→チャレンジしたい！';return t;}
 // ===== FB 書き出し =====
 // 順序が命：クリップボード → 画面表示 → （任意で）共有シート。
 // 旧版は navigator.share を先に呼び、成功すると return していたため、
