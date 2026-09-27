@@ -1325,11 +1325,8 @@ function markWaterZero(){
   try{localStorage.setItem(WZ_KEY,JSON.stringify(waterZero));}catch(e){}
   fillWaterZeroFb();
   flashScreen(160); beep(880,.12);
-  if(!finished){                      // 水位ゼロ＝淹れ終わり。ENJOY! へ送る
-    elapsed=Math.min(calcElapsed(),totalTime); finished=true; timerRunning=false;
-    clearInterval(timerInterval); clearSession();
-    document.getElementById('hud').classList.add('done');
-  }
+  // 水位ゼロ ≠ 落ち切り（2026-09-27 ヤヌキ）。湯面が消えた後も液は落ち続けるので、
+  // 記録するだけでタイマーは止めない。ENJOY! へは最後のステップの終わりで通常どおり進む
   drawHUD();
 }
 function undoWaterZero(){
