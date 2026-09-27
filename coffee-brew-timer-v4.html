@@ -10,7 +10,10 @@
 <meta name="theme-color" content="var(--bg)">
 <meta name="description" content="Pour-over Coffee Brew Timer & Feedback">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%231a1410' width='100' height='100' rx='20'/><text x='50' y='68' text-anchor='middle' font-size='55'>☕</text></svg>">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <style>
   :root{
     /* ── 暗色テーマ（2026-08-28・ui-color-system で数値決定）─────────────
@@ -263,6 +266,15 @@
     opacity:.75;margin-bottom:-2px}
   /* 注がないステップは「注がない」を主役にする。従ってはいけない数字を大きく出さない */
   /* 淹れ終わりの一言。文言と同じ位置に、少し大きく、字間を開けて置く */
+  /* 水位ゼロ：落とし切りの最中に1タップで経過時間を残す（2026-09-25 ヤヌキ発案）。
+     頭で覚えると飲んでいるうちに忘れる。記録を人の記憶から画面へ移す */
+  .hud-zero{margin-top:26px;display:flex;flex-direction:column;align-items:center;gap:10px}
+  .hud-zero[hidden],.hud-zero [hidden]{display:none!important}
+  .hud .hud-zero-btn{background:var(--hud-ink);color:var(--hud-bg);border:0;border-radius:999px;
+    font-size:24px;font-weight:800;letter-spacing:.08em;padding:18px 44px;min-width:220px;cursor:pointer}
+  .hud .hud-zero-rec{font-size:24px;font-weight:700;color:var(--hud-ink);font-variant-numeric:tabular-nums}
+  .hud .hud-zero-undo{background:none;border:0;color:var(--hud-ink);opacity:.6;font-size:14px;
+    text-decoration:underline;padding:8px 14px;cursor:pointer}
   .hud-op.done-msg{font-size:clamp(46px,14vw,72px);letter-spacing:.12em;font-weight:800}
   .hud-nopour{font-size:clamp(40px,12vw,60px);font-weight:800;color:var(--hud-ink);line-height:1.1}
   /* .hud-goal は display:flex なので、UA の [hidden] では消えない */
@@ -601,6 +613,11 @@
     </div>
     <!-- 次の指示は枠の外・下・薄く。↓で「まだ先」と分かるようにする -->
     <div class="hud-next" id="hudNext"></div>
+    <div class="hud-zero" id="hudZero" hidden>
+      <button class="hud-zero-btn" id="hudZeroBtn" onclick="markWaterZero()">水位ゼロ</button>
+      <div class="hud-zero-rec" id="hudZeroRec" hidden></div>
+      <button class="hud-zero-undo" id="hudZeroUndo" onclick="undoWaterZero()" hidden>やり直す</button>
+    </div>
   </div>
   <div class="hud-bottom">
     <button class="btn btn-muted" onclick="closeHud()">▼ 画面を閉じる</button>
@@ -712,7 +729,7 @@
     <div class="section">
       <div class="section-title">📋 抽出フィードバック</div>
       <div class="form-row">
-        <div class="form-group"><label>実際の抽出時間</label><input type="text" id="fbActualTime" placeholder="レシピ通りなら空欄"></div>
+        <div class="form-group"><label>実際の抽出時間（水位ゼロ）</label><input type="text" id="fbActualTime" placeholder="レシピ通りなら空欄"></div>
         <div class="form-group"><label>実際の湯温</label><input type="text" id="fbActualTemp" placeholder="レシピ通りなら空欄"></div>
       </div>
       <div class="form-row">
@@ -912,6 +929,7 @@ function opRisks(t){
   return r;
 }
 const COUNTDOWN_SEC=5;
+let brewRealStart=null;   // ▶◀で動かない本当のスタート時刻（水位ゼロ用）
 let pausedDuration=0,pausedAt=null,lastNotifiedStep=-1,timerRunning=false;
 let lastInteraction=0,autoScrollTimer=null;
 function initAutoScroll(){}
@@ -1003,6 +1021,7 @@ function loadFromURL(data){
 // ===== INIT =====
 function init(){
   renderSensoryRatings();renderFlavorTags();
+  {const w=loadWaterZero(); if(w&&Date.now()-w.at<86400000){waterZero=w;fillWaterZeroFb();}}
   const _restored=restoreSession();
   if(!_restored)prepareBrew();
   document.getElementById('beanWeight').addEventListener('input',updateRatio);
@@ -1144,7 +1163,7 @@ function prepareBrew(){
   document.getElementById('timerView').classList.add('active');renderRecipeSummary();
   document.getElementById('timerTotal').textContent=`/ ${fmt(totalTime)}`;
   elapsed=0;isPaused=false;timerRunning=false;finished=false;lastStepIdx=-1;warnedAt=-1;
-  brewStartTime=null;pausedDuration=0;pausedAt=null;clearSession();
+  brewStartTime=null;brewRealStart=null;pausedDuration=0;pausedAt=null;clearSession();
   document.getElementById('startBtn').style.display='';
 }
 // レシピタブのボタンから：組み立てて抽出タブへ移動するだけ
@@ -1224,6 +1243,7 @@ function drawHUD(){
     H('hudNow').classList.add('bare');
   }
   opEl.classList.toggle('done-msg',finished);
+  drawWaterZero(i,pouring);
 
   // 注湯ステップ：水位 0→100%（満ちたら終わり）。
   // 注がないステップ（落とし切る・待つ）：水位 100→0%（下がり切ったら終わり）。
@@ -1272,6 +1292,64 @@ function jumpStep(d){
 }
 function closeHud(){document.getElementById('hud').classList.remove('on');}
 
+// ===== 水位ゼロ（2026-09-25 ヤヌキ発案）=====
+// 「落とし切る 水位ゼロ時刻を記録」を頭で覚えると、飲んでいるうちに忘れる。
+// 最後の注がないステップと ENJOY! の画面にボタンを置き、押した瞬間の
+// スタートからの経過時間を残す。目標時間を過ぎてもまだ落ちていることがあるので、
+// ENJOY! の後も押せる。
+// ⚠️ ▶◀の手送りは brewStartTime を動かす（画面の時計＝レシピ上の位置）。
+// 水位ゼロは「実際に何秒かかったか」なので、動かない brewRealStart から測る。
+const WZ_KEY='brewWaterZero';
+let waterZero=null;   // {t:秒, start:brewRealStart, at:押した時刻}
+function loadWaterZero(){try{return JSON.parse(localStorage.getItem(WZ_KEY)||'null');}catch(e){return null;}}
+function realElapsed(){
+  if(!brewRealStart)return calcElapsed();
+  const now=isPaused?pausedAt:Date.now();
+  return Math.max(0,Math.floor((now-brewRealStart-pausedDuration)/1000));
+}
+function drawWaterZero(i,pouring){
+  const box=document.getElementById('hudZero'); if(!box)return;
+  const last=i===steps.length-1;
+  const show=!!brewStartTime && (finished || (last && !pouring));
+  box.hidden=!show; if(!show)return;
+  const rec=!!waterZero&&waterZero.start===brewRealStart;
+  document.getElementById('hudZeroBtn').hidden=rec;
+  document.getElementById('hudZeroRec').hidden=!rec;
+  document.getElementById('hudZeroUndo').hidden=!rec;
+  if(rec) document.getElementById('hudZeroRec').textContent=`水位ゼロ ${fmt(waterZero.t)} ✓`;
+}
+function markWaterZero(){
+  if(!brewStartTime)return;
+  const t=realElapsed();
+  waterZero={t,start:brewRealStart,at:Date.now()};
+  try{localStorage.setItem(WZ_KEY,JSON.stringify(waterZero));}catch(e){}
+  fillWaterZeroFb();
+  flashScreen(160); beep(880,.12);
+  if(!finished){                      // 水位ゼロ＝淹れ終わり。ENJOY! へ送る
+    elapsed=Math.min(calcElapsed(),totalTime); finished=true; timerRunning=false;
+    clearInterval(timerInterval); clearSession();
+    document.getElementById('hud').classList.add('done');
+  }
+  drawHUD();
+}
+function undoWaterZero(){
+  waterZero=null; try{localStorage.removeItem(WZ_KEY);}catch(e){}
+  clearWaterZeroFb();
+  drawHUD();
+}
+// FBの「実際の抽出時間」に入れる。本人が手で書いた値は上書きしない
+function fillWaterZeroFb(){
+  const f=document.getElementById('fbActualTime'); if(!f||!waterZero)return;
+  if(f.value&&f.dataset.wz!=='1')return;
+  f.value=fmt(waterZero.t); f.dataset.wz='1';
+  f.dispatchEvent(new Event('input',{bubbles:true}));
+}
+// 自動で入れた値だけを消す（手書きは残す）
+function clearWaterZeroFb(){
+  const f=document.getElementById('fbActualTime');
+  if(f&&f.dataset.wz==='1'){f.value='';delete f.dataset.wz;}
+}
+
 // ===== カウントダウン付き開始 =====
 function beginTimer(){
   if(!steps.length)return;
@@ -1291,7 +1369,8 @@ function abortCountdown(){
   closeHud();
 }
 function actuallyStart(){
-  brewStartTime=Date.now();pausedDuration=0;pausedAt=null;isPaused=false;
+  brewStartTime=Date.now();brewRealStart=brewStartTime;pausedDuration=0;pausedAt=null;isPaused=false;
+  if(waterZero){waterZero=null;try{localStorage.removeItem(WZ_KEY);}catch(e){}clearWaterZeroFb();}
   timerRunning=true;finished=false;lastStepIdx=-1;warnedAt=-1;
   document.getElementById('hud').classList.remove('done','paused');
   document.getElementById('startBtn').style.display='none';
@@ -1309,7 +1388,7 @@ function togglePause(){
 
 function stopBrew(){
   clearInterval(timerInterval);if(cdTimer){clearInterval(cdTimer);cdTimer=null;}
-  timerRunning=false;isPaused=false;finished=false;brewStartTime=null;
+  timerRunning=false;isPaused=false;finished=false;brewStartTime=null;brewRealStart=null;
   clearSession();releaseWakeLock();
   const hud=document.getElementById('hud');
   hud.classList.remove('on','done','paused','warn','wait');
@@ -1322,7 +1401,7 @@ function stopBrew(){
 function saveSession(){
   if(!brewStartTime)return;
   try{localStorage.setItem(SESSION_KEY,JSON.stringify({
-    steps,totalTime,lastBrewRecipe,brewStartTime,pausedDuration,pausedAt,isPaused
+    steps,totalTime,lastBrewRecipe,brewStartTime,brewRealStart,pausedDuration,pausedAt,isPaused
   }));}catch(e){}
 }
 function clearSession(){try{localStorage.removeItem(SESSION_KEY);}catch(e){}}
@@ -1336,7 +1415,7 @@ function restoreSession(){
   // 累積gが欠けたまま描画すると、画面最大の数字が 0g になる（2026-08-28 ヤヌキ報告の正体）。
   // 派生値は保存に頼らず、復元のたびに作り直す。
   {let cum=0;steps.forEach(x=>{cum+=(x.pour||0);x._cumMl=cum;});}
-  brewStartTime=d.brewStartTime;pausedDuration=d.pausedDuration||0;
+  brewStartTime=d.brewStartTime;brewRealStart=d.brewRealStart||d.brewStartTime;pausedDuration=d.pausedDuration||0;
   pausedAt=d.pausedAt||null;isPaused=!!d.isPaused;
   document.getElementById('brewEmpty').style.display='none';
   document.getElementById('timerView').classList.add('active');
@@ -1421,7 +1500,7 @@ function gatherFeedback(){const se={};sensoryItems.forEach((item,i)=>{const _sl=
     .map(t=>({ja:t.textContent,en:t.dataset.en||'',cat:t.dataset.cat||''}));
   const flObj=pick('flavor'),txObj=pick('texture');
   const fl=flObj.map(x=>x.ja);
-  const flavorCats=[...new Set(flObj.map(x=>x.cat))];const o=document.getElementById('fbFlavorOther').value;if(o)fl.push(o);const tx=txObj.map(x=>x.ja);const txo=document.getElementById('fbTextureOther').value;if(txo)tx.push(txo);const _n=new Date();const _p=x=>String(x).padStart(2,'0');return{date:`${_n.getFullYear()}-${_p(_n.getMonth()+1)}-${_p(_n.getDate())}`,time:_n.toTimeString().slice(0,5),recipe:lastBrewRecipe||{bean:document.getElementById('beanName').value},actual:{time:document.getElementById('fbActualTime').value,temp:document.getElementById('fbActualTemp').value,notes:document.getElementById('fbNotes').value},sensory:se,overall:document.getElementById('fbOverall').dataset.touched==='1'?parseInt(document.getElementById('fbOverall').value):null,
+  const flavorCats=[...new Set(flObj.map(x=>x.cat))];const o=document.getElementById('fbFlavorOther').value;if(o)fl.push(o);const tx=txObj.map(x=>x.ja);const txo=document.getElementById('fbTextureOther').value;if(txo)tx.push(txo);const _n=new Date();const _p=x=>String(x).padStart(2,'0');return{date:`${_n.getFullYear()}-${_p(_n.getMonth()+1)}-${_p(_n.getDate())}`,time:_n.toTimeString().slice(0,5),recipe:lastBrewRecipe||{bean:document.getElementById('beanName').value},actual:{time:document.getElementById('fbActualTime').value,water_zero:(waterZero?fmt(waterZero.t):''),temp:document.getElementById('fbActualTemp').value,notes:document.getElementById('fbNotes').value},sensory:se,overall:document.getElementById('fbOverall').dataset.touched==='1'?parseInt(document.getElementById('fbOverall').value):null,
     aim:selAim,aim_memo:document.getElementById('fbAimMemo').value||'',
     foam_white_level:selFoam,
     kettle:document.getElementById('fbKettle').value||'',
