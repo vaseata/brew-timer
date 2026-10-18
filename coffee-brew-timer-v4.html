@@ -729,7 +729,8 @@
     <div class="section">
       <div class="section-title">📋 抽出フィードバック</div>
       <div class="form-row">
-        <div class="form-group"><label>実際の抽出時間（水位ゼロ）</label><input type="text" id="fbActualTime" placeholder="レシピ通りなら空欄"></div>
+        <div class="form-group"><label>水位ゼロ（湯面が消えた時刻）</label><input type="text" id="fbWaterZero" placeholder="ボタンを押すと自動で入る"></div>
+        <div class="form-group"><label>実際の抽出時間（落ち切り）</label><input type="text" id="fbActualTime" placeholder="レシピ通りなら空欄"></div>
         <div class="form-group"><label>実際の湯温</label><input type="text" id="fbActualTemp" placeholder="レシピ通りなら空欄"></div>
       </div>
       <div class="form-row">
@@ -797,9 +798,13 @@
         <button class="btn" onclick="clearFbDraft()">🗑 削除</button>
       </div>
       <button class="btn btn-accent" onclick="exportFeedback()">📋 Claudeに渡す</button>
-      <div class="export-hint">コピーして、端末にも保存します</div>
+      <div class="export-hint">コピーして端末にも保存し、クロードアプリへ進むボタンを出します</div>
       <div id="fbOutBox" style="display:none;margin-top:12px;text-align:left">
         <div class="export-hint" id="fbOutNote" style="margin-bottom:6px"></div>
+        <!-- 2026-10-18 ヤヌキ：iPhone だけで FB を渡す。コピー後、クロードアプリ（Code・Remote Control のセッション）を開いて貼る。
+             アプリが開かない端末では claude.ai/code が Safari で開く（そこからでも同じセッションに貼れる） -->
+        <a id="fbOpenClaude" class="btn btn-accent" href="https://claude.ai/code"
+          style="display:block;text-align:center;text-decoration:none;margin:0 0 10px">📱 クロードアプリを開いて貼る</a>
         <textarea id="fbOutText" rows="12" readonly
           style="width:100%;font-size:.78rem;line-height:1.6"></textarea>
         <div style="text-align:center;margin-top:8px">
@@ -1334,16 +1339,16 @@ function undoWaterZero(){
   clearWaterZeroFb();
   drawHUD();
 }
-// FBの「実際の抽出時間」に入れる。本人が手で書いた値は上書きしない
+// FBの「水位ゼロ」欄に入れる（落ち切り＝実際の抽出時間とは別欄・2026-10-05）。本人が手で書いた値は上書きしない
 function fillWaterZeroFb(){
-  const f=document.getElementById('fbActualTime'); if(!f||!waterZero)return;
+  const f=document.getElementById('fbWaterZero'); if(!f||!waterZero)return;
   if(f.value&&f.dataset.wz!=='1')return;
   f.value=fmt(waterZero.t); f.dataset.wz='1';
   f.dispatchEvent(new Event('input',{bubbles:true}));
 }
 // 自動で入れた値だけを消す（手書きは残す）
 function clearWaterZeroFb(){
-  const f=document.getElementById('fbActualTime');
+  const f=document.getElementById('fbWaterZero');
   if(f&&f.dataset.wz==='1'){f.value='';delete f.dataset.wz;}
 }
 
@@ -1509,7 +1514,7 @@ function buildFeedbackText(){const fb=gatherFeedback();const prefMap={good:'😊
   const _sugTime=(typeof totalTime==='number'&&totalTime>0)?fmt(totalTime):'';
   const _sugTemp=(document.getElementById('waterTemp')||{}).value||'';
   const _prov=(v,sug)=>v?`${v}（実測）`:(sug?`未記入（提案 ${sug}）`:'未記入');
-  t+=`【操作】抽出時間:${_prov(fb.actual.time,_sugTime)} 湯温:${_prov(fb.actual.temp,_sugTemp?_sugTemp+'℃':'')} ケトル:${fb.kettle||'未記入'}\n${fb.actual.notes}\n`;
+  t+=`【操作】抽出時間:${_prov(fb.actual.time,_sugTime)} 水位ゼロ:${fb.actual.water_zero||'未記入'} 湯温:${_prov(fb.actual.temp,_sugTemp?_sugTemp+'℃':'')} ケトル:${fb.kettle||'未記入'}\n${fb.actual.notes}\n`;
   t+=`【実測】抽出液:${fb.beverage_weight_g!=null?fb.beverage_weight_g+'g（実測）':'未計測'}\n`;
   t+=`【白い泡】${fb.foam_white_level!=null?'Lv'+fb.foam_white_level:'未記入'}\n`;
   if(fb.card_flavors&&fb.card_flavors.length)t+=`【カード照合】${fb.card_flavors.map(c=>c.name+':'+c.felt).join(' / ')}\n`;
@@ -1548,7 +1553,7 @@ function clearFbDraft(){
 // FBタブの入力を1秒デバウンスで自動保存する（ボタンを押し忘れても消えないように）
 // 実質的な入力が1つでもあるか（空フォームで下書きを上書きしないため）
 function fbHasInput(){
-  const ids=['fbActualTime','fbActualTemp','fbBeverage','fbNotes','fbKettle','fbAimMemo',
+  const ids=['fbActualTime','fbWaterZero','fbActualTemp','fbBeverage','fbNotes','fbKettle','fbAimMemo',
              'fbOverallMemo','fbFlavorOther','fbTextureOther','fbNextRequest'];
   if(ids.some(id=>{const el=document.getElementById(id);return el&&el.value&&el.value.trim();}))return true;
   if(selAim!==null||selFoam!==null)return true;
@@ -1591,7 +1596,7 @@ async function exportFeedback(){
   // 3) クリップボードに書く（共有シートより「先」。ここが旧版のバグ）
   const ok=await copyToClipboard(t,ta);
   note.textContent = ok
-    ? '✅ コピーしました（この端末にも保存済み）。Claudeに貼り付けてください'
+    ? '✅ コピーしました（この端末にも保存済み）。下のボタンでクロードアプリを開き、Remote Control のセッションに貼ってください'
     : '⚠️ 自動コピーできませんでした。下のテキストを長押し→全選択→コピー（内容は端末に保存済みです）';
 }
 async function copyFeedbackAgain(){
