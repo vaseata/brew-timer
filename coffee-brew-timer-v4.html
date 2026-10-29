@@ -1038,6 +1038,7 @@ function init(){
   // 豆量・湯量・挽き目・湯温・器具が記録に届かない（2026-08-20 発見）。
   // 抽出中のセッションを復元した場合は、状態を壊すので呼ばない。
   if(!_restored)prepareBrew();
+  initRecipeMetaSync();
   showInstallHint();
   initFbAutosave();
   showFbDraftBar();
@@ -1170,6 +1171,21 @@ function prepareBrew(){
   elapsed=0;isPaused=false;timerRunning=false;finished=false;lastStepIdx=-1;warnedAt=-1;
   brewStartTime=null;brewRealStart=null;pausedDuration=0;pausedAt=null;clearSession();
   document.getElementById('startBtn').style.display='';
+}
+// レシピタブで器具・豆の欄を変えたら、FBテキストが読む lastBrewRecipe にもすぐ反映する。
+// prepareBrew は読み込み時に一度だけ写し取るため、後から変えたフィルターが
+// FB に届かなかった（2026-10-29 発見・アバカ→V60 01 W）。手順と時間は触らないので抽出中でも安全。
+const RECIPE_META_FIELDS={bean:'beanName',roast:'roastLevel',weight:'beanWeight',water:'totalWater',ratio:'ratio',grind:'grindClicks',temp:'waterTemp',dripper:'dripper',filter:'filter'};
+function syncRecipeMeta(){
+  if(!lastBrewRecipe)return;
+  for(const k in RECIPE_META_FIELDS)lastBrewRecipe[k]=document.getElementById(RECIPE_META_FIELDS[k]).value;
+  lastBrewRecipe.da=document.getElementById('dripAssist').value==='1';
+  document.getElementById('fbActualTemp').placeholder=lastBrewRecipe.temp+'℃（提案）';
+  renderRecipeSummary();saveSession();
+}
+function initRecipeMetaSync(){
+  [...Object.values(RECIPE_META_FIELDS),'dripAssist'].forEach(id=>{
+    const el=document.getElementById(id);el.addEventListener('change',syncRecipeMeta);el.addEventListener('input',syncRecipeMeta);});
 }
 // レシピタブのボタンから：組み立てて抽出タブへ移動するだけ
 function startBrew(){prepareBrew();switchTab('brew');}
