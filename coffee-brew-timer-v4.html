@@ -1426,6 +1426,9 @@ function togglePause(){
 }
 
 function stopBrew(){
+  // 2026-10-31 ヤヌキ：抽出が終わって「終了」を押したら FB タブへ（撮影ボタンが先頭にある）。
+  // スタート前・カウントダウン中の「終了」は従来どおりレシピへ戻す
+  const brewed=finished||!!brewStartTime;
   stopDoneClock();
   clearInterval(timerInterval);if(cdTimer){clearInterval(cdTimer);cdTimer=null;}
   timerRunning=false;isPaused=false;finished=false;brewStartTime=null;brewRealStart=null;
@@ -1434,7 +1437,8 @@ function stopBrew(){
   hud.classList.remove('on','done','paused','warn','wait');
   document.getElementById('hudCd').classList.remove('on');
   document.getElementById('startBtn').style.display='';
-  switchTab('recipe');
+  switchTab(brewed?'feedback':'recipe');
+  if(brewed)window.scrollTo(0,0);
 }
 
 // ===== 画面を離れても消えないように =====
