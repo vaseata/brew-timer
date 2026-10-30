@@ -728,6 +728,11 @@
   <div class="tab-content" id="tab-feedback">
     <div class="section">
       <div class="section-title">📋 抽出フィードバック</div>
+      <!-- 2026-10-31 ヤヌキ：タイマーから撮影して coffee-inbox へ。Web ページから iCloud Drive には直接保存できないため、
+           iPhone のショートカット「コーヒー撮影」（撮る→coffee-inbox に保存→もう1枚／終わり）を呼ぶ -->
+      <a class="btn btn-accent" href="shortcuts://run-shortcut?name=%E3%82%B3%E3%83%BC%E3%83%92%E3%83%BC%E6%92%AE%E5%BD%B1"
+        style="display:block;text-align:center;text-decoration:none;margin:0 0 4px">📷 写真を撮る（coffee-inbox へ）</a>
+      <div class="export-hint" style="margin-bottom:12px">撮り終わったら、左上の「◀ Safari」で戻ります</div>
       <div class="form-row">
         <div class="form-group"><label>水位ゼロ（湯面が消えた時刻）</label><input type="text" id="fbWaterZero" placeholder="ボタンを押すと自動で入る"></div>
         <div class="form-group"><label>実際の抽出時間（落ち切り）</label><input type="text" id="fbActualTime" placeholder="レシピ通りなら空欄"></div>
@@ -1026,7 +1031,11 @@ function loadFromURL(data){
 // ===== INIT =====
 function init(){
   renderSensoryRatings();renderFlavorTags();
-  {const w=loadWaterZero(); if(w&&Date.now()-w.at<86400000){waterZero=w;fillWaterZeroFb();}}
+  // 読み戻すのは「同じレシピURLを開き直して FB を書く」ときだけ（3時間以内）。
+  // 2026-10-30：24時間以内なら何でも読み戻していたため、前夜の別の杯の 1:48 が新しい杯の FB 欄に出た。
+  {const w=loadWaterZero();
+   if(w&&w.src===location.search&&Date.now()-w.at<3*3600000){waterZero=w;fillWaterZeroFb();}
+   else if(w){try{localStorage.removeItem(WZ_KEY);}catch(e){}}}
   const _restored=restoreSession();
   if(!_restored)prepareBrew();
   document.getElementById('beanWeight').addEventListener('input',updateRatio);
@@ -1209,7 +1218,7 @@ function tick(){
     if(rem<=3&&rem>0&&Math.ceil(rem)!==warnedAt){warnedAt=Math.ceil(rem);cuePre();}
   }
   if(elapsed>=totalTime&&!finished){
-    finished=true;clearInterval(timerInterval);timerRunning=false;cueEnd();clearSession();
+    finished=true;clearInterval(timerInterval);timerRunning=false;cueEnd();clearSession();startDoneClock();
     const _h=document.getElementById('hud');
     _h.classList.add('done','finish-flash');
     setTimeout(()=>_h.classList.remove('finish-flash'),6000);
@@ -1225,7 +1234,9 @@ function drawHUD(){
   const into=e-st.time, rem=Math.max(0,st.time+st.duration-e), pouring=st.pour>0;
   H('hudNo').textContent=`STEP ${i+1}/${steps.length}`;
   H('hudPrevBtn').disabled=(i<=0); H('hudNextBtn').disabled=finished;
-  H('hudEla').textContent=`${fmt(e)} / ${fmt(totalTime)}`;
+  // ENJOY! の後は時計を目標時間で止めず、実際の経過（水位ゼロで記録される値）を出す。
+  // 2026-10-30：画面は 1:55 で止まったまま、押した水位ゼロは 2:28 と記録され、どこから来た数字か分からなかった
+  H('hudEla').textContent=finished&&brewRealStart?`経過 ${fmt(realElapsed())}`:`${fmt(e)} / ${fmt(totalTime)}`;
   const opEl=H('hudOp'),opTxt=drawOp(st.op||''),opN=[...opTxt].length;
   opEl.textContent=opTxt;
   opEl.classList.remove('op-m','op-s','op-xs');
@@ -1296,7 +1307,7 @@ function jumpStep(d){
     elapsed=totalTime; finished=true; timerRunning=false;
     clearInterval(timerInterval);
     document.getElementById('hud').classList.add('done');
-    cueEnd(); clearSession(); flashScreen(160); drawHUD(); return;
+    cueEnd(); clearSession(); startDoneClock(); flashScreen(160); drawHUD(); return;
   }
   const j=Math.max(0,Math.min(steps.length-1,i+d));
   if(j===i&&!finished)return;
@@ -1305,7 +1316,7 @@ function jumpStep(d){
   brewStartTime=now-target*1000-pausedDuration;
   elapsed=target; lastStepIdx=j; warnedAt=-1;
   if(finished){                       // 完了後に戻したら再開する
-    finished=false; timerRunning=true;
+    finished=false; timerRunning=true; stopDoneClock();
     const h=document.getElementById('hud'); h.classList.remove('done','finish-flash');
     clearInterval(timerInterval); timerInterval=setInterval(tick,250);
   }
@@ -1321,7 +1332,8 @@ function closeHud(){document.getElementById('hud').classList.remove('on');}
 // ⚠️ ▶◀の手送りは brewStartTime を動かす（画面の時計＝レシピ上の位置）。
 // 水位ゼロは「実際に何秒かかったか」なので、動かない brewRealStart から測る。
 const WZ_KEY='brewWaterZero';
-let waterZero=null;   // {t:秒, start:brewRealStart, at:押した時刻}
+let waterZero=null;   // {t:秒, start:brewRealStart, at:押した時刻, src:レシピURLの?以降}
+let doneClock=null;   // ENJOY! の後も「実際の経過」を数え続ける（水位ゼロで押す値と画面を一致させる）
 function loadWaterZero(){try{return JSON.parse(localStorage.getItem(WZ_KEY)||'null');}catch(e){return null;}}
 function realElapsed(){
   if(!brewRealStart)return calcElapsed();
@@ -1342,7 +1354,7 @@ function drawWaterZero(i,pouring){
 function markWaterZero(){
   if(!brewStartTime)return;
   const t=realElapsed();
-  waterZero={t,start:brewRealStart,at:Date.now()};
+  waterZero={t,start:brewRealStart,at:Date.now(),src:location.search};
   try{localStorage.setItem(WZ_KEY,JSON.stringify(waterZero));}catch(e){}
   fillWaterZeroFb();
   flashScreen(160); beep(880,.12);
@@ -1350,6 +1362,14 @@ function markWaterZero(){
   // 記録するだけでタイマーは止めない。ENJOY! へは最後のステップの終わりで通常どおり進む
   drawHUD();
 }
+function startDoneClock(){
+  stopDoneClock();
+  doneClock=setInterval(()=>{
+    if(!finished||!brewRealStart||realElapsed()>totalTime+1800){stopDoneClock();return;}
+    drawHUD();
+  },1000);
+}
+function stopDoneClock(){if(doneClock){clearInterval(doneClock);doneClock=null;}}
 function undoWaterZero(){
   waterZero=null; try{localStorage.removeItem(WZ_KEY);}catch(e){}
   clearWaterZeroFb();
@@ -1387,6 +1407,7 @@ function abortCountdown(){
   closeHud();
 }
 function actuallyStart(){
+  stopDoneClock();
   brewStartTime=Date.now();brewRealStart=brewStartTime;pausedDuration=0;pausedAt=null;isPaused=false;
   if(waterZero){waterZero=null;try{localStorage.removeItem(WZ_KEY);}catch(e){}clearWaterZeroFb();}
   timerRunning=true;finished=false;lastStepIdx=-1;warnedAt=-1;
@@ -1405,6 +1426,7 @@ function togglePause(){
 }
 
 function stopBrew(){
+  stopDoneClock();
   clearInterval(timerInterval);if(cdTimer){clearInterval(cdTimer);cdTimer=null;}
   timerRunning=false;isPaused=false;finished=false;brewStartTime=null;brewRealStart=null;
   clearSession();releaseWakeLock();
@@ -1446,6 +1468,7 @@ function restoreSession(){
   document.getElementById('hud').classList.toggle('paused',isPaused);
   switchTab('brew');openHud();drawHUD();
   if(!finished){clearInterval(timerInterval);timerInterval=setInterval(tick,250);requestWakeLock();}
+  else startDoneClock();
   return true;
 }
 
